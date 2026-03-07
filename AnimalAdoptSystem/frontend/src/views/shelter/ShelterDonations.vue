@@ -71,7 +71,7 @@
           <div class="stat-icon">💰</div>
           <div class="stat-content">
             <h3>总捐赠金额</h3>
-            <p class="stat-value">¥{{ (typeof totalDonationAmount === 'number' && !isNaN(totalDonationAmount)) ? totalDonationAmount.toFixed(2) : '0.00' }}</p>
+            <p class="stat-value">¥{{ (typeof totalDonationAmount === 'number' && !isNaN(totalDonationAmount)) ? totalDonationAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' }}</p>
           </div>
         </div>
         <div class="stat-card">
@@ -92,7 +92,7 @@
           <div class="stat-icon">📈</div>
           <div class="stat-content">
             <h3>本月捐赠</h3>
-            <p class="stat-value">¥{{ monthlyDonationAmount.toFixed(2) }}</p>
+            <p class="stat-value">¥{{ monthlyDonationAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
           </div>
         </div>
       </div>
@@ -132,16 +132,16 @@
           <div class="stat-card">
             <div class="stat-icon">📊</div>
             <div class="stat-content">
-              <h3>总使用金额</h3>
-              <p class="stat-value">¥{{ (typeof totalUsageAmount === 'number' && !isNaN(totalUsageAmount)) ? totalUsageAmount.toFixed(2) : '0.00' }}</p>
-            </div>
+            <h3>总使用金额</h3>
+            <p class="stat-value">¥{{ (typeof totalUsageAmount === 'number' && !isNaN(totalUsageAmount)) ? totalUsageAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' }}</p>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div class="stat-content">
-              <h3>剩余金额</h3>
-              <p class="stat-value">¥{{ (typeof remainingAmount === 'number' && !isNaN(remainingAmount)) ? remainingAmount.toFixed(2) : '0.00' }}</p>
-            </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-content">
+            <h3>剩余金额</h3>
+            <p class="stat-value">¥{{ (typeof remainingAmount === 'number' && !isNaN(remainingAmount)) ? remainingAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' }}</p>
+          </div>
           </div>
         </div>
         
@@ -150,7 +150,7 @@
           <div class="usage-card" v-for="usage in donationUsages" :key="usage.id">
             <div class="usage-header">
               <h3>{{ usage.purpose }}</h3>
-              <div class="usage-amount">¥{{ (typeof usage.amount === 'number' && !isNaN(usage.amount)) ? usage.amount.toFixed(2) : '0.00' }}</div>
+              <div class="usage-amount">¥{{ (typeof usage.amount === 'number' && !isNaN(usage.amount)) ? usage.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' }}</div>
             </div>
             <div class="usage-info">
               <div class="usage-meta">
@@ -190,7 +190,7 @@
         <div class="donation-card" v-for="donation in filteredDonations" :key="donation.id">
           <div class="donation-header">
             <h3>{{ donation.donor_name || (donation.donor ? donation.donor.username : '未知捐赠人') }}</h3>
-            <div class="donation-amount">¥{{ (parseFloat(donation.amount) || 0).toFixed(2) }}</div>
+            <div class="donation-amount">¥{{ (parseFloat(donation.amount) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</div>
           </div>
           <div class="donation-info">
             <div class="donation-meta">
@@ -637,7 +637,7 @@ export default {
       return this.donations.reduce((total, donation) => {
         const donationDate = new Date(donation.donation_date)
         if (donationDate.getMonth() + 1 === currentMonth && donationDate.getFullYear() === currentYear) {
-          return total + donation.amount
+          return total + (parseFloat(donation.amount) || 0)
         }
         return total
       }, 0)
@@ -1017,27 +1017,47 @@ export default {
       if (!confirm('确定要删除这个捐赠记录吗？')) {
         return
       }
-      
+          
       this.loading = true
       this.error = ''
       this.success = ''
-      
+          
       try {
-        // 模拟API调用
-        // const response = await this.$axios.delete(`/shelters/donations/${id}/`)
-        // if (response.code === 200) {
+        // 获取基地 ID
+        let shelterId = null
+        if (this.user.shelter) {
+          if (typeof this.user.shelter === 'object' && this.user.shelter.id) {
+            shelterId = this.user.shelter.id
+          } else if (typeof this.user.shelter === 'number') {
+            shelterId = this.user.shelter
+          }
+        } else if (this.user.shelter_id) {
+          shelterId = this.user.shelter_id
+        }
+            
+        if (!shelterId) {
+          this.error = '未找到关联的基地信息'
+          return
+        }
+            
+        // 调用真实的后端 API
+        const response = await this.$axios.delete(`/shelters/${shelterId}/donations/${id}/`)
+        console.log('删除捐赠响应:', response)
+            
+        if (response.code === 200 || response.status === 204) {
           // 删除成功
           this.donations = this.donations.filter(d => d.id !== id)
           this.success = '捐赠记录已删除'
-          
-          // 3秒后清除成功信息
+              
+          // 3 秒后清除成功信息
           setTimeout(() => {
             this.success = ''
           }, 3000)
-        // } else {
-        //   this.error = response.message || '删除失败'
-        // }
+        } else {
+          this.error = response.message || '删除失败'
+        }
       } catch (error) {
+        console.error('删除捐赠失败:', error)
         this.error = error.response?.data?.message || '删除失败，请检查网络连接'
       } finally {
         this.loading = false

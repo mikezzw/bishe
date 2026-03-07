@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.files.base import ContentFile
+import base64
+import re
 from .models import User
 from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
@@ -74,7 +77,53 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['put'], url_path='profile')
     def update_profile(self, request):
         user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        data = request.data.copy()
+        
+        # 处理 Base64 头像
+        if 'avatar_base64' in data or ('avatar' in data and isinstance(data.get('avatar'), str) and data['avatar'].startswith('data:image')):
+            avatar_base64 = data.get('avatar_base64') or data.get('avatar')
+            
+            try:
+                # 解析 Base64 图片数据
+                format_match = re.search(r'data:image/(\w+);base64,', avatar_base64)
+                if not format_match:
+                    return Response({
+                        'code': 400,
+                        'message': '无效的圖片格式'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                image_format = format_match.group(1)
+                # 移除 Base64 头部，获取实际数据
+                image_data = base64.b64decode(avatar_base64.split(',')[1])
+                
+                # 创建文件名
+                filename = f'user_{user.id}_avatar.{image_format}'
+                
+                # 删除旧的头像文件（如果存在）
+                if user.avatar:
+                    user.avatar.delete(save=False)
+                
+                # 保存新头像
+                user.avatar.save(
+                    filename,
+                    ContentFile(image_data),
+                    save=True
+                )
+                
+                # 从数据中移除 avatar_base64，避免重复处理
+                if 'avatar_base64' in data:
+                    del data['avatar_base64']
+                if 'avatar' in data:
+                    del data['avatar']
+                    
+            except Exception as e:
+                return Response({
+                    'code': 500,
+                    'message': f'图片处理失败：{str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # 使用更新后的数据序列化用户
+        serializer = UserSerializer(user, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response({

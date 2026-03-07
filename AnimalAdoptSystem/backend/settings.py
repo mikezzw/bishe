@@ -134,6 +134,10 @@ AUTH_USER_MODEL = "users.User"
 
 STATIC_URL = "static/"
 
+# Media files (Uploaded images, videos, etc.)
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # CORS配置
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
@@ -232,8 +236,8 @@ SIMPLE_JWT = {
 # 注意：需要在百度AI开放平台注册并获取API Key和Secret Key
 # 地址：https://ai.baidu.com/
 BAIDU_AI_CONFIG = {
-    'API_KEY': 'YOUR_BAIDU_API_KEY',  # 替换为你的百度AI API Key
-    'SECRET_KEY': 'YOUR_BAIDU_SECRET_KEY',  # 替换为你的百度AI Secret Key
+    'API_KEY': '1aswieW7t6qQUOdvcZqNUyqD',  # 替换为你的百度AI API Key
+    'SECRET_KEY': 'f9yv69UcieBP7Iv4fCptGYh2dBBDkQpT',  # 替换为你的百度AI Secret Key
     'ANIMAL_DETECT_URL': 'https://aip.baidubce.com/rest/2.0/image-classify/v1/animal',
     'PLANT_DETECT_URL': 'https://aip.baidubce.com/rest/2.0/image-classify/v1/plant'
 }

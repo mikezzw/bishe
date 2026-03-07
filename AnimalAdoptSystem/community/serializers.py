@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Comment, Notification, Report, ContentModeration
+from .models import Post, Comment, Notification, Report, ContentModeration, UserFeedback
 from users.serializers import UserSerializer
 
 class PostSerializer(serializers.ModelSerializer):
@@ -102,3 +102,37 @@ class ContentModerationSerializer(serializers.ModelSerializer):
         model = ContentModeration
         fields = '__all__'
         read_only_fields = ('moderator',)
+
+
+class UserFeedbackSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    processed_by = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = UserFeedback
+        fields = '__all__'
+        read_only_fields = ('user', 'status', 'processed_by', 'processed_at')
+
+
+class UserFeedbackCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserFeedback
+        fields = ('feedback_type', 'priority', 'title', 'content', 'contact_info')
+    
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class UserFeedbackUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserFeedback
+        fields = ('status', 'admin_notes')
+    
+    def update(self, instance, validated_data):
+        # 更新处理人和解决时间
+        if 'status' in validated_data and validated_data['status'] in ['resolved', 'dismissed']:
+            validated_data['processed_by'] = self.context['request'].user
+            from django.utils import timezone
+            validated_data['processed_at'] = timezone.now()
+        return super().update(instance, validated_data)

@@ -56,6 +56,13 @@
           <button class="btn btn-success" @click="saveInfo" v-if="isEditing" :disabled="loading">
             {{ loading ? '保存中...' : '保存' }}
           </button>
+          <button 
+            class="btn btn-danger" 
+            @click="showDeleteConfirm" 
+            v-if="!isEditing && user.user_type === 'admin'"
+            :disabled="loading">
+            删除基地
+          </button>
         </div>
       </div>
       
@@ -87,6 +94,29 @@
               <label for="capacity">容纳能力</label>
               <input type="number" id="capacity" v-model="form.capacity" min="1" required>
             </div>
+            <div class="form-group">
+              <label for="qr_code">收款码</label>
+              <div class="image-upload-area">
+                <div class="image-preview-container" v-if="form.qr_code">
+                  <div class="image-preview">
+                    <img :src="form.qr_code" alt="收款码">
+                    <button type="button" class="remove-image-btn" @click="removeQrCode">×</button>
+                  </div>
+                </div>
+                <div class="upload-placeholder" @click="$refs.qrInput.click()" v-if="!form.qr_code">
+                  <div class="upload-icon">📷</div>
+                  <p>点击上传收款码</p>
+                  <p class="upload-hint">支持 JPG、PNG 格式，最大 5MB</p>
+                </div>
+                <input 
+                  type="file" 
+                  ref="qrInput" 
+                  accept="image/*" 
+                  @change="handleQrCodeUpload" 
+                  style="display: none"
+                >
+              </div>
+            </div>
           </form>
           <div class="info-display" v-else>
             <div class="info-item">
@@ -112,6 +142,12 @@
             <div class="info-item">
               <span class="info-label">容纳能力:</span>
               <span class="info-value">{{ shelterInfo.capacity }} 只宠物</span>
+            </div>
+            <div class="info-item" v-if="qrCodeImage">
+              <span class="info-label">收款码:</span>
+              <div class="qr-code-display">
+                <img :src="qrCodeImage" alt="收款码" style="max-width: 200px; max-height: 200px;">
+              </div>
             </div>
           </div>
         </div>
@@ -213,13 +249,44 @@ export default {
         contact_name: '',
         contact_phone: '',
         email: '',
-        capacity: ''
+        capacity: '',
+        qr_code: null
       },
+      qrCodeFile: null,
       isEditing: false,
       loading: false,
       loadingActivities: false,
       error: '',
       success: ''
+    }
+  },
+  computed: {
+    // 处理收款码图片显示
+    qrCodeImage() {
+      // 如果是数组，取第一个元素
+      let qrCode = null
+      if (Array.isArray(this.shelterInfo.qr_code) && this.shelterInfo.qr_code.length > 0) {
+        qrCode = this.shelterInfo.qr_code[0]
+      } else if (this.shelterInfo.qr_code) {
+        qrCode = this.shelterInfo.qr_code
+      }
+      
+      if (qrCode) {
+        // 如果是 Base64 编码（包含 data:image 前缀）
+        if (typeof qrCode === 'string' && qrCode.startsWith('data:image')) {
+          return qrCode
+        }
+        // 如果是普通 URL（以 http 开头）
+        else if (typeof qrCode === 'string' && qrCode.startsWith('http')) {
+          return qrCode
+        }
+        // 如果是相对路径或 Base64 数据（没有 data:image 前缀）
+        else if (typeof qrCode === 'string') {
+          // 假设为 Base64 编码，添加前缀
+          return `data:image/jpeg;base64,${qrCode}`
+        }
+      }
+      return null
     }
   },
   mounted() {
@@ -327,8 +394,43 @@ export default {
         contact_name: this.shelterInfo.contact_name,
         contact_phone: this.shelterInfo.contact_phone,
         email: this.shelterInfo.email,
-        capacity: this.shelterInfo.capacity
+        capacity: this.shelterInfo.capacity,
+        qr_code: this.shelterInfo.qr_code
       }
+    },
+    handleQrCodeUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+          
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        this.error = '请选择图片文件'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+          
+      // 验证文件大小 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.error = '图片大小不能超过 5MB'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+          
+      this.qrCodeFile = file
+          
+      // 转换为 base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.form.qr_code = e.target.result
+      }
+      reader.readAsDataURL(file)
+          
+      // 清空 input，允许重复选择同一文件
+      event.target.value = ''
+    },
+    removeQrCode() {
+      this.form.qr_code = null
+      this.qrCodeFile = null
     },
     async saveInfo() {
       this.loading = true
@@ -336,25 +438,62 @@ export default {
       this.success = ''
       
       try {
-        // 模拟API调用
-        // const response = await this.$axios.put(`/shelters/${this.shelterInfo.id}/`, this.form)
-        // if (response.code === 200) {
-          // 保存成功
-          this.shelterInfo = {
-            ...this.shelterInfo,
-            ...this.form,
-            updated_at: new Date().toLocaleString()
-          }
-          this.isEditing = false
-          this.success = '基地信息保存成功'
+        if (this.qrCodeFile) {
+          // 使用FormData发送文件
+          const formData = new FormData()
+          formData.append('name', this.form.name)
+          formData.append('description', this.form.description)
+          formData.append('address', this.form.address)
+          formData.append('contact_name', this.form.contact_name)
+          formData.append('contact_phone', this.form.contact_phone)
+          formData.append('email', this.form.email)
+          formData.append('capacity', this.form.capacity)
+          formData.append('qr_code', this.qrCodeFile)
           
-          // 3秒后清除成功信息
-          setTimeout(() => {
-            this.success = ''
-          }, 3000)
-        // } else {
-        //   this.error = response.message || '保存失败'
-        // }
+          // 发送更新请求
+          // const response = await this.$axios.put(`/shelters/${this.shelterInfo.id}/`, formData, {
+          //   headers: {
+          //     'Content-Type': 'multipart/form-data'
+          //   }
+          // })
+          // if (response.code === 200) {
+            // 保存成功
+            this.shelterInfo = {
+              ...this.shelterInfo,
+              ...this.form,
+              updated_at: new Date().toLocaleString()
+            }
+            this.isEditing = false
+            this.success = '基地信息保存成功'
+            
+            // 3秒后清除成功信息
+            setTimeout(() => {
+              this.success = ''
+            }, 3000)
+          // } else {
+          //   this.error = response.message || '保存失败'
+          // }
+        } else {
+          // 模拟API调用
+          // const response = await this.$axios.put(`/shelters/${this.shelterInfo.id}/`, this.form)
+          // if (response.code === 200) {
+            // 保存成功
+            this.shelterInfo = {
+              ...this.shelterInfo,
+              ...this.form,
+              updated_at: new Date().toLocaleString()
+            }
+            this.isEditing = false
+            this.success = '基地信息保存成功'
+            
+            // 3秒后清除成功信息
+            setTimeout(() => {
+              this.success = ''
+            }, 3000)
+          // } else {
+          //   this.error = response.message || '保存失败'
+          // }
+        }
       } catch (error) {
         this.error = error.response?.data?.message || '保存失败，请检查网络连接'
       } finally {

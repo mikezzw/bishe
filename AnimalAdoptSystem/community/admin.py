@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Post, Comment, Notification
+from .models import Post, Comment, Notification, Report, ContentModeration, UserFeedback
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
@@ -51,6 +51,42 @@ class CommentAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ['created_at']
+
+
+@admin.register(UserFeedback)
+class UserFeedbackAdmin(admin.ModelAdmin):
+    list_display = ['user', 'feedback_type', 'priority', 'title', 'status', 'created_at']
+    list_filter = ['feedback_type', 'priority', 'status', 'created_at']
+    search_fields = ['title', 'content', 'user__username']
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        ('反馈信息', {
+            'fields': ('user', 'feedback_type', 'priority')
+        }),
+        ('内容', {
+            'fields': ('title', 'content', 'contact_info')
+        }),
+        ('处理状态', {
+            'fields': ('status', 'admin_notes', 'processed_by')
+        }),
+        ('时间信息', {
+            'fields': ('created_at', 'updated_at', 'processed_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ['user', 'created_at', 'updated_at']
+    
+    def save_model(self, request, obj, form, change):
+        # 如果是更新操作且设置了状态，自动记录处理人
+        if change and 'status' in form.changed_data:
+            if obj.status in ['resolved', 'dismissed']:
+                obj.processed_by = request.user
+                from django.utils import timezone
+                obj.processed_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):

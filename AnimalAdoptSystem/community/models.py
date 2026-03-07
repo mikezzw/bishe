@@ -111,7 +111,7 @@ class ContentModeration(models.Model):
     
     moderator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='审核员')
     content_type = models.CharField(max_length=20, choices=[('post', '帖子'), ('comment', '评论')], verbose_name='内容类型')
-    content_id = models.IntegerField(verbose_name='内容ID')
+    content_id = models.IntegerField(verbose_name='内容 ID')
     action = models.CharField(max_length=20, choices=MODERATION_ACTIONS, verbose_name='操作类型')
     reason = models.TextField(verbose_name='操作原因')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
@@ -123,4 +123,46 @@ class ContentModeration(models.Model):
 
     def __str__(self):
         return f'{self.moderator.username} {self.get_action_display()} {self.content_type} #{self.content_id}'
+
+
+class UserFeedback(models.Model):
+    FEEDBACK_TYPES = (
+        ('complaint', '投诉'),
+        ('suggestion', '建议'),
+        ('bug', 'Bug 反馈'),
+        ('other', '其他'),
+    )
+    PRIORITY_CHOICES = (
+        ('low', '低'),
+        ('medium', '中'),
+        ('high', '高'),
+    )
+    STATUS_CHOICES = (
+        ('pending', '待处理'),
+        ('reviewing', '处理中'),
+        ('resolved', '已解决'),
+        ('dismissed', '已驳回'),
+    )
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='feedbacks', verbose_name='反馈用户')
+    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_TYPES, verbose_name='反馈类型')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium', verbose_name='优先级')
+    title = models.CharField(max_length=200, verbose_name='标题')
+    content = models.TextField(verbose_name='详细内容')
+    contact_info = models.CharField(max_length=100, blank=True, null=True, verbose_name='联系方式（选填）')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='处理状态')
+    admin_notes = models.TextField(blank=True, null=True, verbose_name='管理员备注')
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_feedbacks', verbose_name='处理人')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    processed_at = models.DateTimeField(blank=True, null=True, verbose_name='处理时间')
+    
+    class Meta:
+        db_table = 'user_feedbacks'
+        verbose_name = '用户反馈'
+        verbose_name_plural = '用户反馈列表'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.user.username} - {self.get_feedback_type_display()} - {self.title}'
 

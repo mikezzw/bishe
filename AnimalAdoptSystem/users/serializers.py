@@ -1,8 +1,46 @@
+import base64
+import re
 from rest_framework import serializers
 from .models import User
 from shelters.models import Shelter
 
 class UserSerializer(serializers.ModelSerializer):
+    shelter = serializers.SerializerMethodField()
+    
+    def get_shelter(self, obj):
+        if obj.shelter:
+            from shelters.serializers import ShelterSerializer
+            return ShelterSerializer(obj.shelter).data
+        return None
+    
+    # 添加对 Base64 头像的支持
+    avatar = serializers.SerializerMethodField()
+    
+    def get_avatar(self, obj):
+        """返回头像的完整 URL"""
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
+    
+    def to_internal_value(self, data):
+        """处理传入的数据，支持 Base64 图片"""
+        ret = super().to_internal_value(data)
+        
+        # 如果 avatar 字段是 Base64 字符串，需要特殊处理
+        if 'avatar' in data and isinstance(data['avatar'], str):
+            avatar_data = data['avatar']
+            
+            # 检查是否为 Base64 格式
+            if avatar_data.startswith('data:image'):
+                # 这是一个 Base64 图片，暂时存储到 validated_data 中
+                # 实际的文件处理将在视图或 create/update 方法中进行
+                ret['avatar_base64'] = avatar_data
+        
+        return ret
+    
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'user_type', 'phone', 'avatar', 'address', 'bio', 'shelter', 'created_at',
@@ -17,11 +55,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     shelter_contact_name = serializers.CharField(write_only=True, required=False)
     shelter_description = serializers.CharField(write_only=True, required=False)
     shelter_capacity = serializers.IntegerField(write_only=True, required=False, min_value=1)
+    shelter_qr_code = serializers.CharField(write_only=True, required=False)  # Base64 字符串
 
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'password2', 'user_type', 'phone',
-                  'shelter_name', 'shelter_address', 'shelter_contact_name', 'shelter_description', 'shelter_capacity')
+                  'shelter_name', 'shelter_address', 'shelter_contact_name', 'shelter_description', 'shelter_capacity', 'shelter_qr_code')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -42,6 +81,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         shelter_contact_name = validated_data.pop('shelter_contact_name', None)
         shelter_description = validated_data.pop('shelter_description', '')
         shelter_capacity = validated_data.pop('shelter_capacity', None)
+        shelter_qr_code = validated_data.pop('shelter_qr_code', None)  # Base64 字符串
         user_type = validated_data.pop('user_type', 'normal')
         phone = validated_data.pop('phone', None)
         
@@ -58,15 +98,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         
         # 如果是基地用户，创建对应的基地记录
         if user_type == 'shelter' and shelter_name:
-            shelter = Shelter.objects.create(
-                name=shelter_name,
-                description=shelter_description,
-                address=shelter_address,
-                contact_name=shelter_contact_name,
-                contact_phone=phone,
-                email=validated_data['email'],
-                capacity=shelter_capacity
-            )
+            # 准备创建基地的数据
+            shelter_data = {
+                'name': shelter_name,
+                'description': shelter_description,
+                'address': shelter_address,
+                'contact_name': shelter_contact_name,
+                'contact_phone': phone,
+                'email': validated_data['email'],
+                'capacity': shelter_capacity,
+            }
+            
+            # 如果有上传收款码（Base64），添加到数据中
+            if shelter_qr_code:
+                # 将 Base64 字符串存储为数组
+                shelter_data['qr_code'] = [shelter_qr_code]
+            
+            # 创建基地
+            shelter = Shelter.objects.create(**shelter_data)
             user.shelter = shelter
         
         user.save()

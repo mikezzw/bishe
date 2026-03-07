@@ -26,7 +26,24 @@ api.interceptors.response.use(
     return response.data
   },
   error => {
-    // 不再直接跳转，让组件自己处理401错误
+    // 处理 401 错误
+    if (error.response && error.response.status === 401) {
+      console.log('Token 过期或无效，清除认证信息')
+      // 清除本地存储的 token 和用户信息
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      
+      // 如果是社区等公开接口，重新请求（不带 token）
+      const config = error.config
+      if (config && !config.__isRetryRequest) {
+        config.__isRetryRequest = true
+        // 移除 Authorization 头
+        delete config.headers.Authorization
+        
+        console.log('重新发送请求（不带认证）:', config.url)
+        return api.request(config)
+      }
+    }
     return Promise.reject(error)
   }
 )
@@ -70,7 +87,13 @@ export const adoptionApi = {
   getMyApplications: () => api.get('/adoptions/applications/my-applications/'),
   
   // 获取领养详情
-  getAdoptionDetail: (id) => api.get(`/adoptions/applications/${id}/`)
+  getAdoptionDetail: (id) => api.get(`/adoptions/applications/${id}/`),
+  
+  // 获取指定动物的领养申请
+  getAnimalApplications: (animalId) => api.get('/adoptions/applications/', { params: { animal: animalId } }),
+  
+  // 审核领养申请
+  reviewApplication: (id, data) => api.put(`/adoptions/applications/${id}/`, data)
 }
 
 // 基地相关API
@@ -84,8 +107,11 @@ export const shelterApi = {
   // 搜索基地
   searchShelters: (query) => api.get('/shelters/', { params: query }),
   
+  // 获取基地捐赠统计信息
+  getShelterDonationsStatistics: (shelterId) => api.get(`/shelters/${shelterId}/donations-statistics/`),
+  
   // 提交互动申请
-  submitInteraction: (data) => api.post('/shelters/interactions/', data),
+  submitInteraction: (shelterId, data) => api.post(`/shelters/${shelterId}/interactions/`, data),
   
   // 获取互动申请列表
   getInteractions: () => api.get('/shelters/interactions/'),
@@ -130,7 +156,11 @@ export const communityApi = {
   getNotifications: () => api.get('/community/notifications/'),
   
   // 标记通知为已读
-  markNotificationRead: (id) => api.patch(`/community/notifications/${id}/`, { is_read: true })
+  markNotificationRead: (id) => api.patch(`/community/notifications/${id}/`, { is_read: true }),
+  
+  // 用户反馈相关API
+  submitFeedback: (data) => api.post('/community/feedbacks/', data),
+  getMyFeedbacks: () => api.get('/community/feedbacks/my-feedbacks/')
 }
 
 // 志愿者相关API

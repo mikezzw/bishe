@@ -265,62 +265,47 @@ export default {
         // 直接使用fetch API，避免axios的拦截器问题
         console.log('开始加载活动列表')
         
-        // 并行请求志愿者活动和基地活动
-        const [volunteerResponse, shelterResponse] = await Promise.all([
-          fetch('/api/volunteers/activities/'),
-          fetch('/api/shelters/')
-        ])
+        // 只获取基地列表
+        const shelterResponse = await fetch('/api/shelters/')
         
-        console.log('志愿者活动响应状态:', volunteerResponse.status)
         console.log('基地列表响应状态:', shelterResponse.status)
-        
-        if (!volunteerResponse.ok) {
-          throw new Error(`志愿者活动API错误! status: ${volunteerResponse.status}`)
-        }
         
         if (!shelterResponse.ok) {
           throw new Error(`基地API错误! status: ${shelterResponse.status}`)
         }
         
-        const volunteerData = await volunteerResponse.json()
         const shelterData = await shelterResponse.json()
         
-        console.log('志愿者活动API响应数据:', volunteerData)
         console.log('基地API响应数据:', shelterData)
-        
-        // 处理志愿者活动数据
-        let volunteerActivities = []
-        if (volunteerData.results && Array.isArray(volunteerData.results)) {
-          volunteerActivities = volunteerData.results
-        } else if (Array.isArray(volunteerData)) {
-          volunteerActivities = volunteerData
-        }
         
         // 处理基地活动数据
         let shelterActivities = []
-        if (shelterData.results && Array.isArray(shelterData.results)) {
+        if (shelterData.data && shelterData.data.results && Array.isArray(shelterData.data.results)) {
           // 遍历每个基地，获取其活动
-          for (const shelter of shelterData.results) {
+          for (const shelter of shelterData.data.results) {
             try {
               const activitiesResponse = await fetch(`/api/shelters/${shelter.id}/activities/`)
               if (activitiesResponse.ok) {
                 const activitiesData = await activitiesResponse.json()
-                if (activitiesData.results && Array.isArray(activitiesData.results)) {
-                  // 标准化基地活动数据结构，使其与志愿者活动一致
-                  const normalizedActivities = activitiesData.results.map(activity => ({
-                    id: `shelter-${activity.id}`, // 添加前缀以避免ID冲突
-                    name: activity.title, // 将title映射为name
-                    description: activity.description,
-                    location: activity.location,
-                    start_time: activity.start_time,
-                    end_time: activity.end_time,
-                    capacity: activity.capacity,
-                    status: activity.status,
-                    organizer: { username: typeof activity.created_by === 'object' ? activity.created_by.username : activity.created_by }, // 确保只显示用户名
-                    shelter: { name: shelter.name }, // 添加基地信息
-                    activity_type: activity.activity_type, // 保留基地活动类型
-                    created_at: activity.created_at
-                  }))
+                if (activitiesData.data && activitiesData.data.results && Array.isArray(activitiesData.data.results)) {
+                  // 标准化基地活动数据结构
+                  const normalizedActivities = activitiesData.data.results
+                    // 移除过滤，显示所有基地活动
+                    .map(activity => ({
+                      id: activity.id,
+                      shelterId: shelter.id,
+                      name: activity.title, // 将title映射为name
+                      description: activity.description,
+                      location: activity.location,
+                      start_time: activity.start_time,
+                      end_time: activity.end_time,
+                      capacity: activity.capacity,
+                      status: activity.status,
+                      organizer: { username: typeof activity.created_by === 'object' ? activity.created_by.username : activity.created_by }, // 确保只显示用户名
+                      shelter: { name: shelter.name }, // 添加基地信息
+                      activity_type: activity.activity_type, // 保留基地活动类型
+                      created_at: activity.created_at
+                    }))
                   shelterActivities = [...shelterActivities, ...normalizedActivities]
                 }
               }
@@ -330,10 +315,10 @@ export default {
           }
         }
         
-        // 合并两种活动
-        this.activities = [...volunteerActivities, ...shelterActivities]
-        console.log('合并后的活动数据:', this.activities)
-        console.log('合并后活动总数:', this.activities.length)
+        // 只显示基地活动
+        this.activities = shelterActivities
+        console.log('最终活动数据:', this.activities)
+        console.log('活动总数:', this.activities.length)
         
       } catch (error) {
         console.error('加载活动失败:', error)
@@ -440,12 +425,19 @@ export default {
         return
       }
       
+      // 找到活动对应的基地ID
+      const activity = this.activities.find(a => a.id === activityId)
+      if (!activity || !activity.shelterId) {
+        this.error = '活动信息有误，无法报名'
+        return
+      }
+      
       this.loading = true
       this.error = ''
       
       try {
-        console.log(`开始报名活动 ${activityId}`)
-        const response = await this.$axios.post(`/volunteers/activities/${activityId}/register/`)
+        console.log(`开始报名活动 ${activityId}，基地ID：${activity.shelterId}`)
+        const response = await this.$axios.post(`/shelters/${activity.shelterId}/activities/${activityId}/register/`)
         console.log('报名响应:', response)
         
         if (response.code === 200) {

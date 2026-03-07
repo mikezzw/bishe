@@ -88,7 +88,8 @@ export default {
         let response;
         if (animalId) {
           // 单个动物匹配
-          response = await this.$axios.post(`/animals/${animalId}/personality_match/`, {
+          response = await this.$axios.post('/animals/personality-match/', {
+            animal_id: animalId,
             user_scores: this.scores
           })
         } else {

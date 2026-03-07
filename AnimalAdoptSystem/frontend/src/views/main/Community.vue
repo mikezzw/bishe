@@ -32,7 +32,7 @@
       <div class="posts-list">
         <div v-if="posts.length === 0 && !loading" class="no-posts">
           <p>暂无帖子数据</p>
-          <p>错误信息: {{ error }}</p>
+          <p v-if="error">错误信息: {{ error }}</p>
         </div>
         
         <div class="post-card" v-for="post in filteredPosts" :key="post.id">
@@ -95,8 +95,30 @@
                 <textarea id="post-content" v-model="currentPost.content" rows="5" required></textarea>
               </div>
               <div class="form-group">
-                <label for="post-image">图片链接（可选）</label>
-                <input type="text" id="post-image" v-model="currentPost.image" placeholder="输入图片URL">
+                <label>图片上传（可选）</label>
+                <div 
+                  class="upload-area" 
+                  @click="$refs.imageInput.click()"
+                  @dragover.prevent
+                  @drop.prevent="handleImageDrop"
+                >
+                  <input 
+                    ref="imageInput" 
+                    type="file" 
+                    accept="image/*" 
+                    @change="handleImageUpload"
+                    style="display: none"
+                  >
+                  <div v-if="!currentPost.image" class="upload-placeholder">
+                    <i class="fa fa-cloud-upload"></i>
+                    <p>点击上传图片 或 拖拽图片到此处</p>
+                    <p class="hint">支持 JPG、PNG 格式，最大 5MB</p>
+                  </div>
+                  <div v-else class="image-preview">
+                    <img :src="currentPost.image" alt="预览图片">
+                    <button type="button" class="remove-image-btn" @click.stop="removeImage">×</button>
+                  </div>
+                </div>
               </div>
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary" :disabled="loading">
@@ -504,7 +526,15 @@ export default {
           status: error.response?.status,
           data: error.response?.data
         })
-        this.error = `加载帖子失败: ${error.response?.data?.message || error.message || '请稍后重试'}`
+              
+        // 如果是 401 错误，不显示错误信息（因为拦截器已经自动重试）
+        if (error.response?.status === 401) {
+          console.log('401 错误，已自动清除认证信息并重新请求')
+          // 不设置错误信息，让用户看到空列表即可
+          this.posts = []
+        } else {
+          this.error = `加载帖子失败：${error.response?.data?.message || error.message || '请稍后重试'}`
+        }
       }
     },
     
@@ -539,6 +569,65 @@ export default {
       this.showPostModal = true
       this.error = ''
       this.success = ''
+    },
+    
+    handleImageUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        this.error = '请选择图片文件'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+      
+      // 验证文件大小 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.error = '图片大小不能超过 5MB'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+      
+      // 转换为 base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.currentPost.image = e.target.result
+      }
+      reader.readAsDataURL(file)
+      
+      // 清空 input，允许重复选择同一文件
+      event.target.value = ''
+    },
+    
+    handleImageDrop(event) {
+      const file = event.dataTransfer.files[0]
+      if (!file) return
+      
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        this.error = '请选择图片文件'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+      
+      // 验证文件大小 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.error = '图片大小不能超过 5MB'
+        setTimeout(() => { this.error = '' }, 3000)
+        return
+      }
+      
+      // 转换为 base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.currentPost.image = e.target.result
+      }
+      reader.readAsDataURL(file)
+    },
+    
+    removeImage() {
+      this.currentPost.image = ''
     },
     
     closePostModal() {

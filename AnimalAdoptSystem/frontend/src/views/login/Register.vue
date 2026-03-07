@@ -63,6 +63,13 @@
               <label>容纳能力：</label>
               <input type="number" v-model="form.shelter_capacity" placeholder="请输入基地最大容纳动物数量">
             </div>
+            <div class="form-group">
+              <label>收款码：</label>
+              <input type="file" @change="handleQrCodeUpload" accept="image/*">
+              <div v-if="form.shelter_qr_code" class="qr-code-preview">
+                <img :src="form.shelter_qr_code" alt="收款码预览" style="max-width: 200px; max-height: 200px;">
+              </div>
+            </div>
           </div>
 
           <!-- 错误信息显示 -->
@@ -104,8 +111,10 @@ export default {
         shelter_address: '',
         shelter_contact_name: '',
         shelter_description: '',
-        shelter_capacity: ''
+        shelter_capacity: '',
+        shelter_qr_code: null
       },
+      qrCodeFile: null,
       error: '',
       loading: false
     }
@@ -119,10 +128,24 @@ export default {
         this.form.shelter_contact_name = ''
         this.form.shelter_description = ''
         this.form.shelter_capacity = ''
+        this.form.shelter_qr_code = null
+        this.qrCodeFile = null
       }
     }
   },
   methods: {
+    handleQrCodeUpload(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.qrCodeFile = file
+        // 生成预览URL
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.form.shelter_qr_code = e.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+    },
     async register() {
       // 前端验证
       if (this.form.password.length < 6) {
@@ -146,32 +169,59 @@ export default {
       this.loading = true
       this.error = ''
       try {
-        // 准备发送的数据
-        const requestData = {
-          username: this.form.username,
-          email: this.form.email,
-          password: this.form.password,
-          password2: this.form.password2,
-          user_type: this.form.user_type,
-          phone: this.form.phone
-        }
-        
-        // 如果是基地用户，添加基地相关信息
-        if (this.form.user_type === 'shelter') {
-          requestData.shelter_name = this.form.shelter_name
-          requestData.shelter_address = this.form.shelter_address
-          requestData.shelter_contact_name = this.form.shelter_contact_name
-          requestData.shelter_description = this.form.shelter_description
-          requestData.shelter_capacity = this.form.shelter_capacity
-        }
-        
-        // 发送注册请求
-        const response = await userApi.register(requestData)
-        if (response.code === 200) {
-          // 注册成功后跳转到登录页
-          this.$router.push('/login')
+        if (this.form.user_type === 'shelter' && this.form.shelter_qr_code) {
+          // 使用 Base64 数据发送
+          const requestData = {
+            username: this.form.username,
+            email: this.form.email,
+            password: this.form.password,
+            password2: this.form.password2,
+            user_type: this.form.user_type,
+            phone: this.form.phone,
+            shelter_name: this.form.shelter_name,
+            shelter_address: this.form.shelter_address,
+            shelter_contact_name: this.form.shelter_contact_name,
+            shelter_description: this.form.shelter_description,
+            shelter_capacity: this.form.shelter_capacity,
+            shelter_qr_code: this.form.shelter_qr_code  // Base64 字符串
+          }
+                
+          // 发送注册请求
+          const response = await userApi.register(requestData)
+          if (response.code === 200) {
+            // 注册成功后跳转到登录页
+            this.$router.push('/login')
+          } else {
+            this.error = response.message || '注册失败'
+          }
         } else {
-          this.error = response.message || '注册失败'
+          // 准备发送的数据
+          const requestData = {
+            username: this.form.username,
+            email: this.form.email,
+            password: this.form.password,
+            password2: this.form.password2,
+            user_type: this.form.user_type,
+            phone: this.form.phone
+          }
+          
+          // 如果是基地用户，添加基地相关信息
+          if (this.form.user_type === 'shelter') {
+            requestData.shelter_name = this.form.shelter_name
+            requestData.shelter_address = this.form.shelter_address
+            requestData.shelter_contact_name = this.form.shelter_contact_name
+            requestData.shelter_description = this.form.shelter_description
+            requestData.shelter_capacity = this.form.shelter_capacity
+          }
+          
+          // 发送注册请求
+          const response = await userApi.register(requestData)
+          if (response.code === 200) {
+            // 注册成功后跳转到登录页
+            this.$router.push('/login')
+          } else {
+            this.error = response.message || '注册失败'
+          }
         }
       } catch (error) {
         // 注册错误处理

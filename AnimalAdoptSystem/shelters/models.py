@@ -12,6 +12,7 @@ class Shelter(models.Model):
     website = models.URLField(blank=True, null=True, verbose_name='网站')
     capacity = models.IntegerField(verbose_name='容纳能力')
     current_animals = models.IntegerField(default=0, verbose_name='当前动物数量')
+    qr_code = models.JSONField(default=list, blank=True, null=True, verbose_name='收款码 Base64 数据')
     status = models.CharField(max_length=20, choices=[('active', '活跃'), ('inactive', '不活跃')], default='active', verbose_name='状态')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -77,7 +78,12 @@ class ShelterStaff(models.Model):
         unique_together = ('shelter', 'user')
 
     def __str__(self):
-        return f'{self.user.username} - {self.shelter.name} ({self.get_role_display()})'
+        try:
+            # 处理 user 可能已被删除的情况
+            user_name = self.user.username if self.user else '未知用户'
+        except User.DoesNotExist:
+            user_name = '已删除用户'
+        return f'{user_name} - {self.shelter.name} ({self.get_role_display()})'
 
 class Donation(models.Model):
     DONATION_TYPES = (

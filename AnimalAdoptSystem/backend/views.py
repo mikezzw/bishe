@@ -4,8 +4,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 import os
 from django.conf import settings
+from asgiref.sync import sync_to_async
 
 @csrf_exempt
+@sync_to_async
 def frontend_index(request):
     """
     服务前端单页应用的主页面

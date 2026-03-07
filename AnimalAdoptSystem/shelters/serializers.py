@@ -1,28 +1,43 @@
 from rest_framework import serializers
 from django.utils import timezone
+import base64
 from .models import Shelter, ShelterStaff, Donation, InteractionApplication, ShelterActivity, DonationUsage
-from users.serializers import UserSerializer
 # 延迟导入避免循环依赖
+# from users.serializers import UserSerializer
 # from animals.serializers import AnimalSerializer
 
 class ShelterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shelter
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # 处理 JSONField 格式的 qr_code
+        if instance.qr_code and isinstance(instance.qr_code, list) and len(instance.qr_code) > 0:
+            # 返回数组中的第一个 Base64 字符串
+            representation['qr_code'] = instance.qr_code[0]
+        else:
+            representation['qr_code'] = None
+        return representation
 
 class ShelterCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shelter
-        fields = ['name', 'description', 'address', 'contact_name', 'contact_phone', 'email', 'website', 'capacity']
+        fields = ['name', 'description', 'address', 'contact_name', 'contact_phone', 'email', 'website', 'capacity', 'qr_code']
 
 class ShelterUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shelter
-        fields = ['name', 'description', 'address', 'contact_name', 'contact_phone', 'email', 'website', 'capacity', 'status']
+        fields = ['name', 'description', 'address', 'contact_name', 'contact_phone', 'email', 'website', 'capacity', 'qr_code', 'status']
 
 class ShelterStaffSerializer(serializers.ModelSerializer):
     shelter = ShelterSerializer(read_only=True)
-    user = UserSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
+    
+    def get_user(self, obj):
+        from users.serializers import UserSerializer
+        return UserSerializer(obj.user).data
     
     class Meta:
         model = ShelterStaff
@@ -35,7 +50,13 @@ class ShelterStaffCreateSerializer(serializers.ModelSerializer):
 
 class DonationSerializer(serializers.ModelSerializer):
     shelter = ShelterSerializer(read_only=True)
-    donor = UserSerializer(read_only=True, required=False, allow_null=True)
+    donor = serializers.SerializerMethodField()
+    
+    def get_donor(self, obj):
+        if obj.donor:
+            from users.serializers import UserSerializer
+            return UserSerializer(obj.donor).data
+        return None
     
     class Meta:
         model = Donation
@@ -76,9 +97,19 @@ class DonationUpdateSerializer(serializers.ModelSerializer):
 
 class InteractionApplicationSerializer(serializers.ModelSerializer):
     shelter = ShelterSerializer(read_only=True)
-    applicant = UserSerializer(read_only=True)
+    applicant = serializers.SerializerMethodField()
     # animal = AnimalSerializer(read_only=True)  # 避免循环导入
-    reviewer = UserSerializer(read_only=True)
+    reviewer = serializers.SerializerMethodField()
+    
+    def get_applicant(self, obj):
+        from users.serializers import UserSerializer
+        return UserSerializer(obj.applicant).data
+    
+    def get_reviewer(self, obj):
+        if obj.reviewer:
+            from users.serializers import UserSerializer
+            return UserSerializer(obj.reviewer).data
+        return None
     
     class Meta:
         model = InteractionApplication
@@ -95,7 +126,11 @@ class InteractionApplicationCreateSerializer(serializers.ModelSerializer):
 
 class ShelterActivitySerializer(serializers.ModelSerializer):
     shelter = ShelterSerializer(read_only=True)
-    created_by = UserSerializer(read_only=True)
+    created_by = serializers.SerializerMethodField()
+    
+    def get_created_by(self, obj):
+        from users.serializers import UserSerializer
+        return UserSerializer(obj.created_by).data
     
     class Meta:
         model = ShelterActivity

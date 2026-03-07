@@ -68,7 +68,7 @@
           >
             <div class="shelter-image">
               <img 
-                :src="shelter.image || 'https://via.placeholder.com/300x200?text=基地图片'"
+                :src="getImageUrl(shelter.image)"
                 :alt="shelter.name"
                 @error="handleImageError"
               >
@@ -94,7 +94,7 @@
                   <span class="stat-label">容纳能力</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-number">{{ shelter.adoption_rate }}%</span>
+                  <span class="stat-number">{{ shelter.adoption_rate || 0 }}%</span>
                   <span class="stat-label">领养率</span>
                 </div>
               </div>
@@ -211,15 +211,38 @@ export default {
   },
   
   methods: {
+    getImageUrl(image) {
+      // 如果是数组，取第一个元素
+      if (Array.isArray(image) && image.length > 0) {
+        image = image[0]
+      }
+          
+      if (!image) {
+        return 'https://via.placeholder.com/300x200?text=基地图片'
+      }
+      // 如果是 Base64 编码 (包含 data:image 前缀)
+      if (typeof image === 'string' && image.startsWith('data:image')) {
+        return image
+      }
+      // 如果是普通 URL(以 http 开头)
+      else if (typeof image === 'string' && image.startsWith('http')) {
+        return image
+      }
+      // 如果是纯 Base64 数据 (没有 data:image 前缀)
+      else if (typeof image === 'string') {
+        // 假设为 Base64 编码，添加前缀
+        return `data:image/jpeg;base64,${image}`
+      }
+      // 其他情况返回默认图片
+      return 'https://via.placeholder.com/300x200?text=基地图片'
+    },
+    
     async loadShelters() {
       this.loading = true
       try {
-        const params = {
-          page: this.currentPage,
-          page_size: this.itemsPerPage
-        }
+        const params = {}
         
-        // 添加搜索和筛选参数
+        // 添加搜索和筛选参数（移除分页参数，使用前端分页）
         if (this.searchQuery) {
           params.search = this.searchQuery
         }
@@ -236,7 +259,12 @@ export default {
         
         // 处理分页响应
         let shelters = []
-        if (response.results && Array.isArray(response.results)) {
+        if (response.data && response.data.results && Array.isArray(response.data.results)) {
+          // 后端 API 格式：{code: 200, message: '...', data: {results: [...], count: ...}}
+          shelters = response.data.results
+          this.total = response.data.count || response.data.results.length
+        } else if (response.results && Array.isArray(response.results)) {
+          // DRF 标准格式：{results: [...], count: ...}
           shelters = response.results
           this.total = response.count || response.results.length
         } else if (Array.isArray(response)) {
@@ -290,7 +318,11 @@ export default {
         
         this.shelters = sheltersWithActivities
         console.log('加载完成，基地数量:', this.shelters.length)
-        console.log('第一个基地的活动数量:', this.shelters[0]?.activities?.length || 0)
+        if (this.shelters.length > 0) {
+          console.log('第一个基地的活动数量:', this.shelters[0]?.activities?.length || 0)
+        } else {
+          console.log('暂无基地数据')
+        }
       } catch (error) {
         console.error('加载基地列表失败:', error)
         this.error = '加载基地列表失败，请稍后重试'
@@ -427,8 +459,7 @@ export default {
         }
         
         // 提交申请到后端
-        const response = await shelterApi.submitInteraction({
-          shelter: shelter.id,
+        const response = await shelterApi.submitInteraction(shelter.id, {
           activity: activity.id,
           application_type: applicationType,
           purpose: purpose,
@@ -447,31 +478,17 @@ export default {
       }
     },
     
-    showShelterDetail(shelter) {
+    async showShelterDetail(shelter) {
       // 创建详情模态框
       const modal = document.createElement('div')
       modal.className = 'modal-overlay'
-      
-      // 构建活动列表HTML
-      let activitiesHtml = ''
-      if (shelter.activities && shelter.activities.length > 0) {
-        activitiesHtml = `
-          <div class="detail-section">
-            <h3>基地活动</h3>
-            <div class="activities-list">
-              ${shelter.activities.map(activity => `
-                <div class="activity-item">
-                  <h4>${activity.title || activity.name}</h4>
-                  <p><strong>类型：</strong>${this.getActivityTypeText(activity.activity_type || 'volunteer')}</p>
-                  <p><strong>地点：</strong>${activity.location}</p>
-                  <p><strong>时间：</strong>${new Date(activity.start_time).toLocaleString()}</p>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `
+              
+      // 处理 QR 码 URL - 从数组中获取第一个
+      let qrCodeUrl = null
+      if (shelter.qr_code !== undefined && shelter.qr_code !== null && Array.isArray(shelter.qr_code) && shelter.qr_code.length > 0) {
+        qrCodeUrl = this.getImageUrl(shelter.qr_code[0])
       }
-      
+              
       modal.innerHTML = `
         <div class="modal-content">
           <div class="modal-header">
@@ -481,24 +498,36 @@ export default {
           <div class="modal-body">
             <div class="detail-section">
               <h3>基本信息</h3>
-              <p><strong>地址：</strong>${shelter.address}</p>
-              <p><strong>联系人：</strong>${shelter.contact_name}</p>
-              <p><strong>联系电话：</strong>${shelter.contact_phone}</p>
-              <p><strong>邮箱：</strong>${shelter.email}</p>
-              <p><strong>网站：</strong>${shelter.website || '暂无'}</p>
+              <p><strong>地址:</strong>${shelter.address}</p>
+              <p><strong>联系人:</strong>${shelter.contact_name}</p>
+              <p><strong>联系电话:</strong>${shelter.contact_phone}</p>
+              <p><strong>邮箱:</strong>${shelter.email}</p>
+              <p><strong>网站:</strong>${shelter.website || '暂无'}</p>
             </div>
             <div class="detail-section">
               <h3>运营信息</h3>
-              <p><strong>容纳能力：</strong>${shelter.capacity} 只动物</p>
-              <p><strong>当前动物数：</strong>${shelter.current_animals} 只</p>
-              <p><strong>领养率：</strong>${shelter.adoption_rate}%</p>
-              <p><strong>状态：</strong><span class="status ${shelter.status}">${shelter.status === 'active' ? '运营中' : '暂停运营'}</span></p>
+              <p><strong>容纳能力:</strong>${shelter.capacity} 只动物</p>
+              <p><strong>当前动物数:</strong>${shelter.current_animals} 只</p>
+              <p><strong>领养率:</strong>${shelter.adoption_rate || 0}%</p>
+              <p><strong>状态:</strong><span class="status ${shelter.status}">${shelter.status === 'active' ? '运营中' : '暂停运营'}</span></p>
             </div>
             <div class="detail-section">
               <h3>基地介绍</h3>
               <p>${shelter.description}</p>
             </div>
-            ${activitiesHtml}
+            ${qrCodeUrl ? `
+            <div class="detail-section">
+              <h3>捐款渠道</h3>
+              <div class="qr-code-container">
+                <img src="${qrCodeUrl}" alt="收款码" style="max-width: 200px; max-height: 200px; margin: 0 auto; display: block;">
+                <p style="text-align: center; margin-top: 10px; color: #666;">扫码捐款支持基地运营，也可以寄送实物，感谢您的支持!</p>
+              </div>
+            </div>
+            ` : ''}
+            <div class="detail-section" id="donations-statistics">
+              <h3>💰 捐赠与使用情况</h3>
+              <div class="loading-donations">正在加载捐赠统计数据...</div>
+            </div>
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">关闭</button>
@@ -506,18 +535,100 @@ export default {
           </div>
         </div>
       `
-      
+          
       // 添加联系基地的隐藏触发按钮
       const contactTrigger = document.createElement('button')
       contactTrigger.className = 'contact-modal-trigger'
       contactTrigger.style.display = 'none'
       contactTrigger.onclick = () => this.showContactModal(shelter)
       modal.appendChild(contactTrigger)
-      
+          
       document.body.appendChild(modal)
-      
+          
       // 添加样式
       this.addModalStyles()
+          
+      // 获取捐赠统计数据
+      this.loadDonationsStatistics(shelter.id)
+    },
+        
+    async loadDonationsStatistics(shelterId) {
+      try {
+        const response = await shelterApi.getShelterDonationsStatistics(shelterId)
+        console.log('获取捐赠统计响应:', response)
+            
+        if (response.code === 200 && response.data) {
+          const stats = response.data
+          const donationsStatDiv = document.getElementById('donations-statistics')
+              
+          if (donationsStatDiv) {
+            const usageTypeMap = {
+              'food': '食物采购',
+              'medical': '医疗费用',
+              'facility': '设施建设',
+              'staff': '人员工资',
+              'other': '其他用途'
+            }
+                
+            let recentUsagesHtml = ''
+            if (stats.recent_usages && stats.recent_usages.length > 0) {
+              recentUsagesHtml = `
+                <div style="margin-top: 20px;">
+                  <h4 style="color: #ff6b6b; margin-bottom: 10px;">最近使用记录</h4>
+                  <div style="max-height: 300px; overflow-y: auto;">
+                    ${stats.recent_usages.map(usage => `
+                      <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                          <span style="font-weight: bold; color: #333;">${usage.purpose}</span>
+                          <span style="color: #ff6b6b; font-weight: bold;">¥${parseFloat(usage.amount).toFixed(2)}</span>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.85rem; color: #666;">
+                          <span>类型：${usageTypeMap[usage.usage_type] || usage.usage_type}</span>
+                          <span style="margin-left: 10px;">日期：${new Date(usage.usage_date).toLocaleDateString()}</span>
+                        </div>
+                        ${usage.description ? `<div style="margin-top: 5px; font-size: 0.85rem; color: #888;">${usage.description}</div>` : ''}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `
+            } else {
+              recentUsagesHtml = '<p style="text-align: center; color: #999; margin-top: 15px;">暂无使用记录</p>'
+            }
+                
+            donationsStatDiv.innerHTML = `
+              <h3>💰 捐赠与使用情况</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 1.5rem; font-weight: bold; color: #1976d2; margin-bottom: 5px;">¥${stats.total_donations_amount.toFixed(2)}</div>
+                  <div style="font-size: 0.9rem; color: #666;">捐赠总额</div>
+                  <div style="font-size: 0.8rem; color: #999; margin-top: 3px;">共 ${stats.total_donations_count} 笔</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 1.5rem; font-weight: bold; color: #c62828; margin-bottom: 5px;">¥${stats.total_used_amount.toFixed(2)}</div>
+                  <div style="font-size: 0.9rem; color: #666;">已使用</div>
+                  <div style="font-size: 0.8rem; color: #999; margin-top: 3px;">共 ${stats.total_usages_count} 笔</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 1.5rem; font-weight: bold; color: #2e7d32; margin-bottom: 5px;">¥${stats.remaining_amount.toFixed(2)}</div>
+                  <div style="font-size: 0.9rem; color: #666;">剩余金额</div>
+                  <div style="font-size: 0.8rem; color: #999; margin-top: 3px;">可用余额</div>
+                </div>
+              </div>
+              ${recentUsagesHtml}
+            `
+          }
+        }
+      } catch (error) {
+        console.error('加载捐赠统计数据失败:', error)
+        const donationsStatDiv = document.getElementById('donations-statistics')
+        if (donationsStatDiv) {
+          donationsStatDiv.innerHTML = `
+            <h3>💰 捐赠与使用情况</h3>
+            <p style="text-align: center; color: #999; padding: 20px;">加载捐赠统计数据失败</p>
+          `
+        }
+      }
     },
     
     showContactModal(shelter) {
@@ -678,6 +789,13 @@ export default {
           margin-bottom: 15px;
           padding-bottom: 8px;
           border-bottom: 2px solid #ff6b6b;
+        }
+        
+        .loading-donations {
+          text-align: center;
+          padding: 30px;
+          color: #999;
+          font-style: italic;
         }
         
         .detail-section p {

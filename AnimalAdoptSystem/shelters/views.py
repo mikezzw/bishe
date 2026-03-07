@@ -18,7 +18,7 @@ class ShelterViewSet(viewsets.ModelViewSet):
     serializer_class = ShelterSerializer
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'get_donations_statistics']:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -28,6 +28,148 @@ class ShelterViewSet(viewsets.ModelViewSet):
         elif self.action in ['update', 'partial_update']:
             return ShelterUpdateSerializer
         return ShelterSerializer
+
+    def list(self, request):
+        # 获取查询集
+        queryset = self.get_queryset()
+        
+        # 应用过滤
+        queryset = self.filter_queryset(queryset)
+        
+        # 分页处理
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            # 手动序列化数据
+            serialized_data = []
+            for shelter in page:
+                shelter_data = {
+                    'id': shelter.id,
+                    'name': shelter.name,
+                    'description': shelter.description,
+                    'address': shelter.address,
+                    'contact_name': shelter.contact_name,
+                    'contact_phone': shelter.contact_phone,
+                    'email': shelter.email,
+                    'website': shelter.website,
+                    'capacity': shelter.capacity,
+                    'current_animals': shelter.current_animals,
+                    'status': shelter.status,
+                    'created_at': shelter.created_at,
+                    'updated_at': shelter.updated_at,
+                    'qr_code': shelter.qr_code or None  # JSONField 直接返回
+                }
+                serialized_data.append(shelter_data)
+            
+            # 构建分页响应
+            pagination_data = {
+                'count': self.get_queryset().count(),
+                'next': self.paginator.get_next_link(),
+                'previous': self.paginator.get_previous_link(),
+                'results': serialized_data
+            }
+            
+            # 构建最终响应格式
+            response_data = {
+                'code': 200,
+                'message': '获取基地列表成功',
+                'data': pagination_data
+            }
+            return Response(response_data)
+        
+        # 非分页处理
+        shelters = queryset
+        serialized_data = []
+        for shelter in shelters:
+            shelter_data = {
+                'id': shelter.id,
+                'name': shelter.name,
+                'description': shelter.description,
+                'address': shelter.address,
+                'contact_name': shelter.contact_name,
+                'contact_phone': shelter.contact_phone,
+                'email': shelter.email,
+                'website': shelter.website,
+                'capacity': shelter.capacity,
+                'current_animals': shelter.current_animals,
+                'status': shelter.status,
+                'created_at': shelter.created_at,
+                'updated_at': shelter.updated_at,
+                'qr_code': shelter.qr_code or None  # JSONField 直接返回
+            }
+            serialized_data.append(shelter_data)
+        return Response({
+            'code': 200,
+            'message': '获取基地列表成功',
+            'data': serialized_data
+        })
+
+    def retrieve(self, request, pk=None):
+        shelter = self.get_object()
+        # 手动序列化数据
+        shelter_data = {
+            'id': shelter.id,
+            'name': shelter.name,
+            'description': shelter.description,
+            'address': shelter.address,
+            'contact_name': shelter.contact_name,
+            'contact_phone': shelter.contact_phone,
+            'email': shelter.email,
+            'website': shelter.website,
+            'capacity': shelter.capacity,
+            'current_animals': shelter.current_animals,
+            'status': shelter.status,
+            'created_at': shelter.created_at,
+            'updated_at': shelter.updated_at,
+            'qr_code': shelter.qr_code or None  # JSONField 直接返回
+        }
+        return Response({
+            'code': 200,
+            'message': '获取基地详情成功',
+            'data': shelter_data
+        })
+        
+    @action(detail=True, methods=['get'], url_path='donations-statistics')
+    def get_donations_statistics(self, request, pk=None):
+        """获取基地的捐赠和使用统计信息"""
+        from django.db.models import Sum, Count
+        shelter = self.get_object()
+            
+        # 获取所有捐赠
+        donations = Donation.objects.filter(shelter=shelter)
+            
+        # 计算捐赠总额
+        total_donations_amount = donations.aggregate(total=Sum('amount'))['total'] or 0
+            
+        # 获取所有捐赠使用记录
+        donation_ids = list(donations.values_list('id', flat=True))
+        usages = DonationUsage.objects.filter(donation_id__in=donation_ids)
+            
+        # 计算使用总额
+        total_used_amount = usages.aggregate(total=Sum('amount'))['total'] or 0
+            
+        # 按用途类型统计
+        usage_types_breakdown = dict(
+            usages.values('usage_type').annotate(count=Count('usage_type')).values_list('usage_type', 'count')
+        )
+            
+        # 最近的使用记录
+        recent_usages = DonationUsageSerializer(usages.order_by('-created_at')[:5], many=True).data
+            
+        stats = {
+            'total_donations_amount': float(total_donations_amount),
+            'total_used_amount': float(total_used_amount),
+            'remaining_amount': float(total_donations_amount - total_used_amount),
+            'total_donations_count': donations.count(),
+            'total_usages_count': usages.count(),
+            'usage_types_breakdown': usage_types_breakdown,
+            'recent_usages': recent_usages
+        }
+            
+        return Response({
+            'code': 200,
+            'message': '获取捐赠统计信息成功',
+            'data': stats
+        })
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -39,10 +181,27 @@ class ShelterViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 role='manager'
             )
+            # 手动序列化数据
+            shelter_data = {
+                'id': shelter.id,
+                'name': shelter.name,
+                'description': shelter.description,
+                'address': shelter.address,
+                'contact_name': shelter.contact_name,
+                'contact_phone': shelter.contact_phone,
+                'email': shelter.email,
+                'website': shelter.website,
+                'capacity': shelter.capacity,
+                'current_animals': shelter.current_animals,
+                'status': shelter.status,
+                'created_at': shelter.created_at,
+                'updated_at': shelter.updated_at,
+                'qr_code': shelter.qr_code or None  # JSONField 直接返回
+            }
             return Response({
                 'code': 200,
                 'message': '动物基地创建成功',
-                'data': ShelterSerializer(shelter).data
+                'data': shelter_data
             }, status=status.HTTP_201_CREATED)
         return Response({
             'code': 400,
@@ -60,6 +219,42 @@ class ShelterViewSet(viewsets.ModelViewSet):
             'message': '获取基地工作人员成功',
             'data': serializer.data
         })
+
+    def destroy(self, request, pk=None):
+        """删除基地及其关联数据"""
+        shelter = self.get_object()
+        
+        # 检查权限：只有超级管理员可以删除基地
+        if not request.user.is_staff:
+            return Response({
+                'code': 403,
+                'message': '只有系统管理员可以删除基地'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 统计关联数据
+        from django.db.models import Count
+        stats = {
+            'staff_count': shelter.staff.count(),
+            'activities_count': shelter.activities.count(),
+            'donations_count': shelter.donations.count(),
+            'interaction_applications_count': shelter.interaction_applications.count()
+        }
+        
+        # 计算捐赠使用记录数量
+        donation_ids = list(shelter.donations.values_list('id', flat=True))
+        from .models import DonationUsage
+        usages_count = DonationUsage.objects.filter(donation_id__in=donation_ids).count()
+        stats['donation_usages_count'] = usages_count
+        
+        # 执行删除 (CASCADE 会自动删除关联数据)
+        shelter_name = shelter.name
+        shelter.delete()
+        
+        return Response({
+            'code': 200,
+            'message': f'基地 "{shelter_name}" 及其关联数据已删除',
+            'deleted_stats': stats
+        }, status=status.HTTP_204_NO_CONTENT)
 
 class ShelterStaffViewSet(viewsets.ModelViewSet):
     queryset = ShelterStaff.objects.all()
@@ -276,14 +471,60 @@ class InteractionApplicationViewSet(viewsets.ModelViewSet):
         return InteractionApplicationSerializer
 
     def get_queryset(self):
+        # 从URL参数中获取基地ID
+        shelter_pk = self.kwargs.get('shelter_pk')
+        if shelter_pk:
+            # 如果提供了基地ID，只返回该基地的申请
+            return self.queryset.filter(shelter_id=shelter_pk)
+        
         if self.request.user.is_staff:
             return self.queryset
         # 普通用户只能查看自己的申请记录
         return self.queryset.filter(applicant=self.request.user)
 
-    def create(self, request):
+    def list(self, request, shelter_pk=None):
+        # 分页处理
+        page = self.paginate_queryset(self.get_queryset())
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            # 构建分页响应数据
+            paginated_response = self.get_paginated_response(serializer.data)
+            # 构建最终响应格式
+            response_data = {
+                'code': 200,
+                'message': '获取互动申请列表成功',
+                'data': paginated_response.data
+            }
+            return Response(response_data)
+        
+        # 非分页处理
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response({
+            'code': 200,
+            'message': '获取互动申请列表成功',
+            'data': serializer.data
+        })
+
+    def create(self, request, shelter_pk=None):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         if serializer.is_valid():
+            # 设置 shelter（从 URL 参数获取）
+            if shelter_pk:
+                from .models import Shelter
+                try:
+                    shelter = Shelter.objects.get(pk=shelter_pk)
+                    serializer.validated_data['shelter'] = shelter
+                except Shelter.DoesNotExist:
+                    return Response({
+                        'code': 404,
+                        'message': '基地不存在'
+                    }, status=status.HTTP_404_NOT_FOUND)
+            
+            # animal 是可选的，如果前端传递了 activity 字段，忽略它
+            # 因为 InteractionApplication 不需要 activity 字段
+            if 'activity' in serializer.validated_data:
+                del serializer.validated_data['activity']
+            
             application = serializer.save()
             return Response({
                 'code': 200,
@@ -319,10 +560,14 @@ class InteractionApplicationViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], url_path='approve')
-    def approve_application(self, request, pk=None):
+    def approve_application(self, request, shelter_pk=None, pk=None):
         application = self.get_object()
         # 检查当前用户是否有权限审核申请
-        if not ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists() and not request.user.is_staff:
+        is_staff = ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists()
+        is_admin = getattr(request.user, "shelter_id", None) == application.shelter.id
+        is_superuser = request.user.is_staff
+        
+        if not (is_staff or is_admin or is_superuser):
             return Response({
                 'code': 403,
                 'message': '只有基地工作人员可以审核申请'
@@ -339,10 +584,14 @@ class InteractionApplicationViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'], url_path='reject')
-    def reject_application(self, request, pk=None):
+    def reject_application(self, request, shelter_pk=None, pk=None):
         application = self.get_object()
         # 检查当前用户是否有权限审核申请
-        if not ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists() and not request.user.is_staff:
+        is_staff = ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists()
+        is_admin = getattr(request.user, "shelter_id", None) == application.shelter.id
+        is_superuser = request.user.is_staff
+        
+        if not (is_staff or is_admin or is_superuser):
             return Response({
                 'code': 403,
                 'message': '只有基地工作人员可以审核申请'
@@ -359,10 +608,14 @@ class InteractionApplicationViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'], url_path='complete')
-    def complete_application(self, request, pk=None):
+    def complete_application(self, request, shelter_pk=None, pk=None):
         application = self.get_object()
         # 检查当前用户是否有权限完成申请
-        if not ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists() and not request.user.is_staff:
+        is_staff = ShelterStaff.objects.filter(shelter=application.shelter, user=request.user).exists()
+        is_admin = getattr(request.user, "shelter_id", None) == application.shelter.id
+        is_superuser = request.user.is_staff
+        
+        if not (is_staff or is_admin or is_superuser):
             return Response({
                 'code': 403,
                 'message': '只有基地工作人员可以完成申请'
@@ -487,6 +740,52 @@ class ShelterActivityViewSet(viewsets.ModelViewSet):
             'code': 200,
             'message': '获取基地活动成功',
             'data': serializer.data
+        })
+
+    @action(detail=True, methods=['post'], url_path='register')
+    def register_activity(self, request, shelter_pk=None, pk=None):
+        activity = self.get_object()
+        # 检查是否已经报名（使用 purpose 字段存储活动ID）
+        if InteractionApplication.objects.filter(
+            applicant=request.user,
+            shelter=activity.shelter,
+            application_type='volunteer',
+            purpose=f'activity_{activity.id}'
+        ).exists():
+            return Response({
+                'code': 400,
+                'message': '您已经报名参加此活动'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        # 检查活动是否已满
+        # 计算当前报名人数
+        registration_count = InteractionApplication.objects.filter(
+            shelter=activity.shelter,
+            application_type='volunteer',
+            purpose=f'activity_{activity.id}'
+        ).count()
+        if registration_count >= activity.capacity:
+            return Response({
+                'code': 400,
+                'message': '活动人数已满'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        # 检查活动状态
+        if activity.status not in ['upcoming']:
+            return Response({
+                'code': 400,
+                'message': '活动已开始或已结束，无法报名'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        # 创建报名记录
+        application = InteractionApplication.objects.create(
+            applicant=request.user,
+            shelter=activity.shelter,
+            application_type='volunteer',
+            purpose=f'activity_{activity.id}',
+            desired_date=activity.start_time
+        )
+        return Response({
+            'code': 200,
+            'message': '报名成功',
+            'data': InteractionApplicationSerializer(application).data
         })
 
 

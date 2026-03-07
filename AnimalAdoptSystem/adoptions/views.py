@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import AdoptionApplication, AdoptionMatch
 from .serializers import AdoptionApplicationSerializer, AdoptionApplicationCreateSerializer, AdoptionApplicationUpdateSerializer, AdoptionMatchSerializer
 from animals.models import Animal
+from shelters.models import ShelterStaff
 
 class AdoptionApplicationViewSet(viewsets.ModelViewSet):
     queryset = AdoptionApplication.objects.all()
@@ -21,6 +22,15 @@ class AdoptionApplicationViewSet(viewsets.ModelViewSet):
         elif self.action == 'update' or self.action == 'partial_update':
             return AdoptionApplicationUpdateSerializer
         return AdoptionApplicationSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'code': 200,
+            'message': '获取领养申请成功',
+            'data': serializer.data
+        })
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -39,11 +49,35 @@ class AdoptionApplicationViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None):
         application = self.get_object()
+        # 检查当前用户是否有权限审核领养申请
+        if not request.user.is_staff:
+            # 非管理员需要是基地工作人员
+            if application.animal and application.animal.shelter:
+                # 检查用户是否是该基地的管理员（通过 user.shelter 字段）
+                if request.user.shelter == application.animal.shelter:
+                    pass  # 用户是该基地的管理员
+                # 或者检查用户是否是该基地的工作人员（通过 ShelterStaff 表）
+                elif ShelterStaff.objects.filter(shelter=application.animal.shelter, user=request.user).exists():
+                    pass  # 用户是该基地的工作人员
+                else:
+                    return Response({
+                        'code': 403,
+                        'message': '只有基地工作人员可以审核领养申请',
+                        'details': f'用户 {request.user.username} 不是基地 {application.animal.shelter.name} 的工作人员'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            else:
+                # 如果动物为 null 或没有所属基地，只有管理员可以审核
+                return Response({
+                    'code': 403,
+                    'message': '只有管理员可以审核无所属基地动物的领养申请',
+                    'details': f'动物 ID {application.animal.id if application.animal else "无"} 没有所属基地'
+                }, status=status.HTTP_403_FORBIDDEN)
+        # 系统管理员直接通过权限检查
         serializer = self.get_serializer(application, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             # 如果审核通过，更新动物状态为已领养
-            if application.status == 'approved':
+            if application.status == 'approved' and application.animal:
                 animal = application.animal
                 animal.status = 'adopted'
                 animal.save()
@@ -57,6 +91,94 @@ class AdoptionApplicationViewSet(viewsets.ModelViewSet):
             'message': '审核失败',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        """批准领养申请"""
+        application = self.get_object()
+        
+        # 检查当前用户是否有权限审核领养申请
+        if not request.user.is_staff:
+            if application.animal and application.animal.shelter:
+                # 检查用户是否是该基地的管理员（通过 user.shelter 字段）
+                if request.user.shelter == application.animal.shelter:
+                    pass  # 用户是该基地的管理员
+                # 或者检查用户是否是该基地的工作人员（通过 ShelterStaff 表）
+                elif ShelterStaff.objects.filter(shelter=application.animal.shelter, user=request.user).exists():
+                    pass  # 用户是该基地的工作人员
+                else:
+                    return Response({
+                        'code': 403,
+                        'message': '只有基地工作人员可以审核领养申请',
+                        'details': f'用户 {request.user.username} 不是基地 {application.animal.shelter.name} 的工作人员'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({
+                    'code': 403,
+                    'message': '只有管理员可以审核无所属基地动物的领养申请',
+                    'details': f'动物 ID {application.animal.id if application.animal else "无"} 没有所属基地'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 更新申请状态为批准
+        application.status = 'approved'
+        application.review_comments = request.data.get('review_comments', '审核通过')
+        application.reviewer = request.user
+        from datetime import datetime
+        application.reviewed_at = datetime.now()
+        application.save()
+        
+        # 更新动物状态为已领养
+        if application.animal:
+            animal = application.animal
+            animal.status = 'adopted'
+            animal.save()
+        
+        return Response({
+            'code': 200,
+            'message': '批准成功',
+            'data': AdoptionApplicationSerializer(application).data
+        })
+
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
+        """拒绝领养申请"""
+        application = self.get_object()
+        
+        # 检查当前用户是否有权限审核领养申请
+        if not request.user.is_staff:
+            if application.animal and application.animal.shelter:
+                # 检查用户是否是该基地的管理员（通过 user.shelter 字段）
+                if request.user.shelter == application.animal.shelter:
+                    pass  # 用户是该基地的管理员
+                # 或者检查用户是否是该基地的工作人员（通过 ShelterStaff 表）
+                elif ShelterStaff.objects.filter(shelter=application.animal.shelter, user=request.user).exists():
+                    pass  # 用户是该基地的工作人员
+                else:
+                    return Response({
+                        'code': 403,
+                        'message': '只有基地工作人员可以审核领养申请',
+                        'details': f'用户 {request.user.username} 不是基地 {application.animal.shelter.name} 的工作人员'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({
+                    'code': 403,
+                    'message': '只有管理员可以审核无所属基地动物的领养申请',
+                    'details': f'动物 ID {application.animal.id if application.animal else "无"} 没有所属基地'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 更新申请状态为拒绝
+        application.status = 'rejected'
+        application.review_comments = request.data.get('review_comments', '审核拒绝')
+        application.reviewer = request.user
+        from datetime import datetime
+        application.reviewed_at = datetime.now()
+        application.save()
+        
+        return Response({
+            'code': 200,
+            'message': '拒绝成功',
+            'data': AdoptionApplicationSerializer(application).data
+        })
 
     @action(detail=False, methods=['get'], url_path='my-applications')
     def my_applications(self, request):

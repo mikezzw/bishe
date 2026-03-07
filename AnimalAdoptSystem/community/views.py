@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Post, Comment, Notification, Report, ContentModeration
-from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentSerializer, CommentCreateSerializer, NotificationSerializer, NotificationUpdateSerializer, ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer, ContentModerationSerializer
+from .models import Post, Comment, Notification, Report, ContentModeration, UserFeedback
+from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentSerializer, CommentCreateSerializer, NotificationSerializer, NotificationUpdateSerializer, ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer, ContentModerationSerializer, UserFeedbackSerializer, UserFeedbackCreateSerializer, UserFeedbackUpdateSerializer
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
@@ -321,4 +321,72 @@ class ContentModerationViewSet(viewsets.ReadOnlyModelViewSet):
             'code': 200,
             'message': '获取审核统计成功',
             'data': stats
+        })
+
+
+class UserFeedbackViewSet(viewsets.ModelViewSet):
+    queryset = UserFeedback.objects.all()
+    serializer_class = UserFeedbackSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserFeedbackCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return UserFeedbackUpdateSerializer
+        return UserFeedbackSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        # 普通用户只能看到自己的反馈，管理员可以看到所有反馈
+        if hasattr(user, 'is_staff') and user.is_staff:
+            return self.queryset
+        return self.queryset.filter(user=user)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            feedback = serializer.save()
+            return Response({
+                'code': 200,
+                'message': '反馈提交成功，我们会尽快处理',
+                'data': UserFeedbackSerializer(feedback).data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'code': 400,
+            'message': '反馈提交失败',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, pk=None):
+        feedback = self.get_object()
+        # 只有管理员可以更新反馈状态
+        if not (hasattr(request.user, 'is_staff') and request.user.is_staff):
+            return Response({
+                'code': 403,
+                'message': '只有管理员可以处理反馈'
+            }, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(feedback, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            feedback = serializer.save()
+            return Response({
+                'code': 200,
+                'message': '反馈处理成功',
+                'data': UserFeedbackSerializer(feedback).data
+            })
+        return Response({
+            'code': 400,
+            'message': '反馈处理失败',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'], url_path='my-feedbacks')
+    def my_feedbacks(self, request):
+        feedbacks = self.get_queryset().filter(user=request.user)
+        serializer = UserFeedbackSerializer(feedbacks, many=True)
+        return Response({
+            'code': 200,
+            'message': '获取我的反馈记录成功',
+            'data': serializer.data
         })

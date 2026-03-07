@@ -187,7 +187,8 @@ export default {
               // 处理捐赠数据
               if (donationsResponse.code === 200) {
                 const donations = donationsResponse.data.results || donationsResponse.data || []
-                this.stats.totalDonations = donations.reduce((total, donation) => total + (donation.amount || 0), 0)
+                const total = donations.reduce((total, donation) => total + (parseFloat(donation.amount) || 0), 0)
+                this.stats.totalDonations = total.toFixed(2)
               }
               
               console.log('数据加载完成:', this.stats)
@@ -234,7 +235,8 @@ export default {
               // 处理捐赠数据
               if (donationsResponse.code === 200) {
                 const donations = donationsResponse.data.results || donationsResponse.data || []
-                this.stats.totalDonations = donations.reduce((total, donation) => total + (donation.amount || 0), 0)
+                const total = donations.reduce((total, donation) => total + (parseFloat(donation.amount) || 0), 0)
+                this.stats.totalDonations = total.toFixed(2)
               }
               
               console.log('数据加载完成:', this.stats)

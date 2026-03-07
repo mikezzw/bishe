@@ -10,7 +10,7 @@ class User(AbstractUser):
     )
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='normal')
     phone = models.CharField(max_length=11, blank=True, null=True)
-    avatar = models.URLField(blank=True, null=True)
+    avatar = models.ImageField(upload_to='user_avatars/', blank=True, null=True, verbose_name='头像')
     address = models.CharField(max_length=200, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     shelter = models.OneToOneField('shelters.Shelter', on_delete=models.SET_NULL, null=True, blank=True, related_name='manager', verbose_name='管理的基地')

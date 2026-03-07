@@ -96,6 +96,7 @@
             </div>
             <div class="animal-actions">
               <button class="btn btn-sm btn-primary" @click="openEditModal(animal)">编辑</button>
+              <button class="btn btn-sm btn-info" @click="viewAdoptionApplications(animal.id)">领养申请</button>
               <button class="btn btn-sm btn-danger" @click="deleteAnimal(animal.id)">删除</button>
             </div>
           </div>
@@ -305,6 +306,43 @@
       </div>
     </div>
     
+    <!-- 领养申请模态框 -->
+    <div class="modal" v-if="showAdoptionModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>领养申请管理</h2>
+          <button class="btn-close" @click="showAdoptionModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="loadingApplications" class="loading">加载中...</div>
+          <div v-else-if="adoptionApplications.length === 0" class="empty-state">
+            <p>暂无领养申请</p>
+          </div>
+          <div v-else class="adoption-applications-list">
+            <div class="adoption-application-item" v-for="app in adoptionApplications" :key="app.id">
+              <div class="application-header">
+                <h3>申请人: {{ app.applicant.username }}</h3>
+                <span class="status-badge" :class="app.status">{{ getApplicationStatusText(app.status) }}</span>
+              </div>
+              <div class="application-details">
+                <p><strong>申请理由:</strong> {{ app.application_reason }}</p>
+                <p><strong>个人信息:</strong> {{ app.personal_info }}</p>
+                <p><strong>联系电话:</strong> {{ app.contact_phone }}</p>
+                <p><strong>联系地址:</strong> {{ app.contact_address }}</p>
+                <p><strong>申请时间:</strong> {{ formatDate(app.created_at) }}</p>
+                <p v-if="app.reviewed_at"><strong>审核时间:</strong> {{ formatDate(app.reviewed_at) }}</p>
+                <p v-if="app.review_comments"><strong>审核意见:</strong> {{ app.review_comments }}</p>
+              </div>
+              <div class="application-actions" v-if="app.status === 'pending'">
+                <button class="btn btn-sm btn-success" @click="approveApplication(app.id)">通过</button>
+                <button class="btn btn-sm btn-danger" @click="rejectApplication(app.id)">拒绝</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- 图像识别模态框 -->
     <div class="modal" v-if="showIdentifyModal">
       <div class="modal-content identify-modal">
@@ -375,6 +413,8 @@
 </template>
 
 <script>
+import { adoptionApi } from '@/api'
+
 export default {
   name: 'ShelterAnimals',
   data() {
@@ -421,7 +461,11 @@ export default {
       },
       loading: false,
       error: '',
-      success: ''
+      success: '',
+      showAdoptionModal: false,
+      adoptionApplications: [],
+      loadingApplications: false,
+      currentAnimalId: null
     }
   },
   computed: {
@@ -989,6 +1033,106 @@ export default {
       } finally {
         this.isIdentifying = false
       }
+    },
+    async viewAdoptionApplications(animalId) {
+      this.currentAnimalId = animalId
+      this.loadingApplications = true
+      this.adoptionApplications = []
+      this.showAdoptionModal = true
+      
+      try {
+        const response = await adoptionApi.getAnimalApplications(animalId)
+        
+        if (response.code === 200 && response.data) {
+          let applicationsData = []
+          if (Array.isArray(response.data)) {
+            applicationsData = response.data
+          } else if (response.data.results) {
+            applicationsData = response.data.results
+          } else {
+            applicationsData = [response.data]
+          }
+          
+          this.adoptionApplications = applicationsData
+        } else {
+          this.error = response.message || '获取领养申请失败'
+        }
+      } catch (error) {
+        console.error('获取领养申请失败:', error)
+        this.error = '获取领养申请失败: ' + (error.response?.data?.message || error.message)
+      } finally {
+        this.loadingApplications = false
+      }
+    },
+    async approveApplication(applicationId) {
+      try {
+        const response = await adoptionApi.reviewApplication(applicationId, {
+          status: 'approved'
+        })
+        
+        if (response.code === 200) {
+          // 更新本地申请状态
+          const index = this.adoptionApplications.findIndex(app => app.id === applicationId)
+          if (index !== -1) {
+            this.adoptionApplications[index].status = 'approved'
+            this.adoptionApplications[index].reviewed_at = new Date().toISOString()
+          }
+          
+          // 重新加载动物列表，以更新动物状态
+          await this.fetchAnimals()
+          
+          this.success = '领养申请已通过'
+          setTimeout(() => { this.success = '' }, 3000)
+        } else {
+          this.error = response.message || '审核失败'
+        }
+      } catch (error) {
+        console.error('审核领养申请失败:', error)
+        const errorMessage = error.response?.data?.message || error.message
+        const errorDetails = error.response?.data?.details || ''
+        this.error = `审核失败: ${errorMessage} ${errorDetails}`
+      }
+    },
+    async rejectApplication(applicationId) {
+      try {
+        const response = await adoptionApi.reviewApplication(applicationId, {
+          status: 'rejected'
+        })
+        
+        if (response.code === 200) {
+          // 更新本地申请状态
+          const index = this.adoptionApplications.findIndex(app => app.id === applicationId)
+          if (index !== -1) {
+            this.adoptionApplications[index].status = 'rejected'
+            this.adoptionApplications[index].reviewed_at = new Date().toISOString()
+          }
+          
+          this.success = '领养申请已拒绝'
+          setTimeout(() => { this.success = '' }, 3000)
+        } else {
+          this.error = response.message || '审核失败'
+        }
+      } catch (error) {
+        console.error('审核领养申请失败:', error)
+        const errorMessage = error.response?.data?.message || error.message
+        const errorDetails = error.response?.data?.details || ''
+        this.error = `审核失败: ${errorMessage} ${errorDetails}`
+      }
+    },
+    getApplicationStatusText(status) {
+      const statusMap = {
+        'pending': '待审核',
+        'approved': '审核通过',
+        'rejected': '审核拒绝',
+        'completed': '已领养',
+        'cancelled': '已取消'
+      }
+      return statusMap[status] || status
+    },
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleString('zh-CN')
     }
   }
 }
@@ -1261,6 +1405,16 @@ export default {
   color: #f57c00;
 }
 
+.status-badge.approved {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.status-badge.rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
 .animal-actions {
   display: flex;
   gap: 10px;
@@ -1318,6 +1472,59 @@ export default {
 
 .modal-body {
   padding: 20px;
+}
+
+/* 领养申请列表样式 */
+.adoption-applications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.adoption-application-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.adoption-application-item:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.application-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.application-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.application-details {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.application-details p {
+  margin: 5px 0;
+}
+
+.application-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
 }
 
 /* 表单样式 */
@@ -1497,11 +1704,20 @@ export default {
 }
 
 .btn-success {
-  background-color: #2196F3;
+  background-color: #4caf50;
   color: white;
 }
 
 .btn-success:hover {
+  background-color: #388e3c;
+}
+
+.btn-info {
+  background-color: #2196F3;
+  color: white;
+}
+
+.btn-info:hover {
   background-color: #0b7dda;
 }
 
