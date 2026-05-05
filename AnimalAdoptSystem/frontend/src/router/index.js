@@ -38,6 +38,12 @@ const routes = [
     component: () => import('../views/main/SmartRecommend.vue')
   },
   {
+    path: '/cloud-pets',
+    name: 'MyCloudPets',
+    component: () => import('../views/main/MyCloudPets.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/shelters',
     name: 'Shelters',
     component: () => import('../views/main/Shelters.vue')
@@ -137,7 +143,7 @@ const router = createRouter({
 
 // 路由守卫，检查登录状态
 router.beforeEach((to, from, next) => {
-  const requiresAuth = ['AdoptionApply', 'MyAdoptions', 'Profile', 'PasswordChange', 'VolunteerApply']
+  const requiresAuth = ['AdoptionApply', 'MyAdoptions', 'Profile', 'PasswordChange', 'VolunteerApply', 'MyCloudPets']
   const requiresShelter = ['ShelterDashboard', 'ShelterInfo', 'ShelterAnimals', 'ShelterAdoptions', 'ShelterActivities', 'ShelterVolunteers', 'ShelterDonations']
   const token = localStorage.getItem('token')
   const userStr = localStorage.getItem('user')

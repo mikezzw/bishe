@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-_ev=@pmyxfpds19u90%)32f6e-)-p1$zw0g%^*jj)zswz+46=x"
+SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-_ev=@pmyxfpds19u90%)32f6e-)-p1$zw0g%^*jj)zswz+46=x")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -85,12 +86,11 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "animaladoptsystem",
-        "USER": "root",
-        "PASSWORD": "123456",
-        "HOST": "localhost",
-        "PORT": "3306",
-
+        "NAME": os.environ.get('DB_NAME', "animaladoptsystem"),
+        "USER": os.environ.get('DB_USER', "root"),
+        "PASSWORD": os.environ.get('DB_PASSWORD', "123456"),
+        "HOST": os.environ.get('DB_HOST', "localhost"),
+        "PORT": os.environ.get('DB_PORT', "3306"),
     }
 }
 
@@ -143,10 +143,13 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Redis缓存配置
+REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 50},
@@ -155,7 +158,7 @@ CACHES = {
     },
     "session": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -243,8 +246,8 @@ BAIDU_AI_CONFIG = {
 }
 
 # Celery配置
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', f"redis://{REDIS_HOST}:{REDIS_PORT}/0")
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', f"redis://{REDIS_HOST}:{REDIS_PORT}/0")
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

@@ -5,104 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="51d0fcbf-f26c-428e-b9aa-5fa041b53744" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/AnimalAdoptSystem.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/AnimalAdoptSystem.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/CACHE_GUIDE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/CELERY_USAGE_GUIDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/tests.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/adoptions/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/associate_activities_with_shelters.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/animals/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/animals/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/animals/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/animals/tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/animals/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/animals/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/backend/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/backend/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/backend/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/backend/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/backend/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/backend/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/check_activities.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/check_base_info.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/check_shelter_data.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/check_shelters.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/check_user_shelters.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/fix_shelter_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/debug_recommend.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/AdoptionApply-B3pOQ9Hf.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/AdoptionApply-DQKTmAbu.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Adoptions-tXDSD9Tf.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Adoptions-wjatfNmb.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/AnimalDetail-BcwL2DsN.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/AnimalDetail-Yfq8s2-6.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Animals-BjOCNVUl.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Animals-BvKKI_v9.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Community-Brf3ZKV1.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Community-DYUhsWeE.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Home-BD8hw0cb.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Home-DZGHKvJD.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Login-BDJySp4P.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Login-CKJzkFMn.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/MyAdoptions-C8PVWq4y.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/MyAdoptions-C8WuhsVv.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PasswordChange-5i9qASZz.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PasswordChange-CtVaMYgn.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PasswordReset-DMDUB98N.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PasswordReset-DmBVQLT4.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PersonalityTest-DPqXbjV3.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/PersonalityTest-DwZqrXMt.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Profile-B2FWAAlR.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Profile-DBNFtxDg.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/R-C-B4v6AXLr.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Register-D6oUVgbX.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Register-DdvK1xOG.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterActivities-C9b1u7Ni.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterActivities-D2ApviMr.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterAdoptions-CEm-ZOYC.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterAdoptions-CWgL-s4n.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterAnimals-Cbn8SuC5.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterAnimals-nR1wAQ-W.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterDashboard-AAKSOpND.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterDashboard-vkKA8cxp.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterDonations-BYTNoC8R.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterDonations-Dq4Lr4Es.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterInfo-CUTGWFBg.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterInfo-DYeuzPPW.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterVolunteers-CJfgJj6l.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/ShelterVolunteers-DcTd_qnU.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Shelters-DLaUYHRJ.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/Shelters-DgzZml8B.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/SmartRecommend-CKFeXJvn.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/SmartRecommend-CWMMTqTm.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/VolunteerActivities-BiH2bWpj.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/VolunteerActivities-BjUr9XhK.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/VolunteerApply--9IpYjeO.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/VolunteerApply-CU6RgbB_.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/fengmian-D_kpwh1V.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/index-3wYDXo53.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/index-CADhgMZA.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/assets/index-DXLNZ-xC.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/dist/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/community/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/community/tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/App.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/api/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/api/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/components/PersonalityTest.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/components/PersonalityTest.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/login/Register.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/login/Register.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Community.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Community.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Profile.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Profile.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Shelters.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/Shelters.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/VolunteerActivities.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/main/VolunteerActivities.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/router/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterAnimals.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterAnimals.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterDashboard.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterDashboard.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterDonations.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterDonations.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterInfo.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterInfo.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterVolunteers.vue" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/frontend/src/views/shelter/ShelterVolunteers.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/test_shelter_api.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/users/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/users/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/users/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/users/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/users/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/users/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/manage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/shelters/tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AnimalAdoptSystem/users/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/AnimalAdoptSystem/users/tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,6 +29,13 @@
   </component>
   <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
     <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -124,25 +49,49 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/Code/python/AnimalAdoptSystem",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "ts.external.directory.path": "D:\\Software\\Dev\\Pycharm\\PyCharm 2024.3.6\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.algorithm_comparison.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Code/python/AnimalAdoptSystem&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\Software\\Dev\\Pycharm\\PyCharm 2024.3.6\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager">
+}</component>
+  <component name="RunManager" selected="Python.algorithm_comparison">
+    <configuration name="algorithm_comparison" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="AnimalAdoptSystem" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/AnimalAdoptSystem/utils" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/AnimalAdoptSystem/utils/algorithm_comparison.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="AnimalAdoptSystem" type="Python.DjangoServer" factoryName="Django server">
       <module name="AnimalAdoptSystem" />
       <option name="ENV_FILES" value="" />
@@ -167,6 +116,11 @@
       <option name="customRunCommand" value="" />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.algorithm_comparison" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -186,11 +140,36 @@
       <updated>1772522697261</updated>
       <workItem from="1772522698819" duration="2099000" />
       <workItem from="1772612134550" duration="13198000" />
-      <workItem from="1772795988823" duration="12012000" />
+      <workItem from="1772795988823" duration="14867000" />
+      <workItem from="1773559413731" duration="1411000" />
+      <workItem from="1774787535304" duration="1980000" />
+      <workItem from="1775461861707" duration="6113000" />
+      <workItem from="1775993642325" duration="1494000" />
+      <workItem from="1775996540460" duration="1045000" />
+      <workItem from="1776246341966" duration="1751000" />
+      <workItem from="1776253107489" duration="1437000" />
+      <workItem from="1776585556306" duration="4474000" />
+      <workItem from="1776687500815" duration="458000" />
+      <workItem from="1776688004942" duration="987000" />
+      <workItem from="1777192799601" duration="3298000" />
+      <workItem from="1777351148594" duration="4240000" />
+      <workItem from="1777375654797" duration="2956000" />
+      <workItem from="1777439380936" duration="274000" />
+      <workItem from="1777441606833" duration="753000" />
+      <workItem from="1777464671046" duration="4981000" />
+      <workItem from="1777524581956" duration="3198000" />
+      <workItem from="1777797080330" duration="13182000" />
+      <workItem from="1777863866054" duration="14278000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.mermaid" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/tempfile_1775994169575_mermaid$algorithm_comparison.coverage" NAME="algorithm_comparison Coverage Results" MODIFIED="1777525489531" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/AnimalAdoptSystem/utils" />
   </component>
 </project>

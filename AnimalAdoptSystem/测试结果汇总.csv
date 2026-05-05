@@ -1,0 +1,33 @@
+模块,测试类,测试方法,结果,状态说明,优先级,测试数据/输入,预期输出,实际输出
+users,UserRegistrationTest,test_user_registration_success,FAIL,注册返回400需检查必填字段,P1,"username=testuser,password=testpass123,email=test@example.com,phone=13800138000",HTTP 201 Created,HTTP 400 Bad Request
+users,UserRegistrationTest,test_user_registration_duplicate_username,PASS,重复用户名正确拒绝,P0,"已存在用户testuser,再次注册相同用户名",HTTP 400 Bad Request,HTTP 400 Bad Request
+users,UserLoginTest,test_login_success,FAIL,响应结构为access/refresh非token,P1,"username=testuser,password=testpass123","data.token字段",data.access和data.refresh
+users,UserLoginTest,test_login_wrong_password,PASS,密码错误正确拒绝,P0,"username=testuser,password=wrongpass",HTTP 401 Unauthorized,HTTP 401 Unauthorized
+users,UserProfileTest,test_get_profile,PASS,获取用户资料成功,P0,已登录用户请求/profile,data.username=testuser,data.username=testuser
+users,UserProfileTest,test_update_profile,FAIL,PATCH方法返回405 API不支持,P2,"PATCH /profile/,phone=13800138000,address=北京市朝阳区",HTTP 200 OK,HTTP 405 Method Not Allowed
+users,PersonalityTestUpdateTest,test_update_personality_scores,ERROR,URL反向解析失败,P0,"openness=4.5,conscientiousness=3.8,extraversion=4.2,agreeableness=4.0,neuroticism=2.5",HTTP 200 OK,URL配置错误
+users,PersonalityTestUpdateTest,test_invalid_personality_score,ERROR,URL反向解析失败,P0,"openness=6.0(超出1-5范围)",HTTP 400 Bad Request,URL配置错误
+animals,AnimalListTest,test_get_animals_list,FAIL,响应结构问题,P1,GET /animals/,data.results包含2个动物,响应结构不符合预期
+animals,AnimalListTest,test_filter_animals_by_species,ERROR,排序警告导致问题,P1,GET /animals/?species=cat,data.results包含1个猫,UnorderedObjectListWarning
+animals,AnimalListTest,test_filter_animals_by_status,ERROR,排序警告导致问题,P1,GET /animals/?status=available,data.results包含2个可用动物,UnorderedObjectListWarning
+animals,AnimalDetailTest,test_get_animal_detail,PASS,获取动物详情成功,P0,GET /animals/{id}/,data.name=小白,data.name=小白
+animals,AnimalDetailTest,test_nonexistent_animal,PASS,不存在动物正确返回404,P0,GET /animals/99999/,HTTP 404 Not Found,HTTP 404 Not Found
+animals,PersonalityMatchTest,test_personality_match,PASS,性格匹配计算成功,P0,"animal_id={id},user_scores={openness:4.0,...}",data.match_percentage和animal_traits,data.match_percentage和animal_traits
+animals,PersonalityMatchTest,test_match_with_missing_scores,ERROR,缺少分数验证逻辑问题,P1,"animal_id={id},user_scores={openness:4.0}(缺少其他4项)",HTTP 400 Bad Request,验证逻辑异常
+animals,PersonalityMatchTest,test_match_with_invalid_score,FAIL,无效分数验证问题,P1,"animal_id={id},user_scores={openness:6.0}(超出范围)}",HTTP 400 Bad Request,未正确验证
+adoptions,AdoptionApplicationTest,test_create_application,PASS,创建申请成功,P0,"POST /applications/,animal={id},application_reason=...,personal_info=...",HTTP 201 Created,HTTP 201 Created
+adoptions,AdoptionApplicationTest,test_create_application_unauthenticated,PASS,未登录正确拒绝,P0,未登录用户POST /applications/,HTTP 401 Unauthorized,HTTP 401 Unauthorized
+adoptions,AdoptionApplicationTest,test_get_user_applications,ERROR,响应结构无results字段,P1,GET /applications/,data.results包含申请列表,KeyError: 'results'
+adoptions,ApplicationReviewTest,test_approve_application,ERROR,review URL配置问题,P0,"POST /applications/{id}/review/,action=approve,comments=审核通过",HTTP 200 OK,status=approved,URL配置错误
+adoptions,ApplicationReviewTest,test_reject_application,ERROR,review URL配置问题,P0,"POST /applications/{id}/review/,action=reject,comments=不符合条件",HTTP 200 OK,status=rejected,URL配置错误
+adoptions,AdoptionMatchTest,test_calculate_match_single_animal,ERROR,calculate-match URL问题,P0,"POST /calculate-match/,animal_id={id},user_scores={...}",data.match_percentage,URL配置错误
+adoptions,AdoptionMatchTest,test_calculate_match_all_animals,ERROR,calculate-match URL问题,P0,"POST /calculate-match/,user_scores={...}",data.matches包含2个匹配,URL配置错误
+adoptions,AdoptionMatchTest,test_match_algorithm_accuracy,ERROR,calculate-match URL问题,P0,"用户与动物特征完全一致",match_percentage>90,URL配置错误
+shelters,ShelterListTest,test_get_shelters_list,FAIL,响应结构问题+排序警告,P1,GET /shelters/,data.results包含2个收容所,响应结构不符+排序警告
+shelters,ShelterListTest,test_search_shelter_by_name,ERROR,搜索功能问题,P1,GET /shelters/?search=北京,data.results包含1个北京基地,搜索功能异常
+shelters,ShelterDetailTest,test_get_shelter_detail,ERROR,详情URL问题,P0,GET /shelters/{id}/,data.name=北京爱心基地,URL配置错误
+shelters,DonationTest,test_create_donation,ERROR,捐赠API问题,P1,"POST /donations/,shelter={id},amount=100,donation_type=money",HTTP 201 Created,API路由错误
+shelters,DonationTest,test_get_user_donations,ERROR,捐赠列表问题,P1,GET /donations/,data.results包含捐赠记录,API路由错误
+community,PostTest,test_create_post,PASS,创建帖子成功,P0,"POST /posts/,title=我的领养经历,content=分享故事,category=experience",HTTP 201 Created,HTTP 201 Created
+community,PostTest,test_get_posts_list,PASS,获取帖子列表成功,P0,GET /posts/,data.results包含帖子列表,data.results包含帖子列表
+community,CommentTest,test_create_comment,PASS,创建评论成功,P0,"POST /comments/,post={id},content=很好的分享",HTTP 201 Created,HTTP 201 Created

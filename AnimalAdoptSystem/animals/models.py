@@ -1,4 +1,10 @@
 from django.db import models
+import random
+
+
+def generate_default_trait():
+    """生成随机但合理的默认性格特征值"""
+    return round(random.uniform(2.0, 4.0), 1)
 
 class Animal(models.Model):
     STATUS_CHOICES = (
@@ -40,11 +46,11 @@ class Animal(models.Model):
         verbose_name_plural = '流浪动物列表'
 
     # 动物性格特征 (1-5分)
-    animal_openness = models.FloatField(default=3.0, help_text="动物开放性")
-    animal_conscientiousness = models.FloatField(default=3.0, help_text="动物尽责性")
-    animal_extraversion = models.FloatField(default=3.0, help_text="动物外向性")
-    animal_agreeableness = models.FloatField(default=3.0, help_text="动物宜人性")
-    animal_neuroticism = models.FloatField(default=3.0, help_text="动物神经质")
+    animal_openness = models.FloatField(default=generate_default_trait, help_text="动物开放性")
+    animal_conscientiousness = models.FloatField(default=generate_default_trait, help_text="动物尽责性")
+    animal_extraversion = models.FloatField(default=generate_default_trait, help_text="动物外向性")
+    animal_agreeableness = models.FloatField(default=generate_default_trait, help_text="动物宜人性")
+    animal_neuroticism = models.FloatField(default=generate_default_trait, help_text="动物神经质")
 
     def __str__(self):
         return self.name

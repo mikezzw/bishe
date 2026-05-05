@@ -93,7 +93,13 @@ export const adoptionApi = {
   getAnimalApplications: (animalId) => api.get('/adoptions/applications/', { params: { animal: animalId } }),
   
   // 审核领养申请
-  reviewApplication: (id, data) => api.put(`/adoptions/applications/${id}/`, data)
+  reviewApplication: (id, data) => api.put(`/adoptions/applications/${id}/`, data),
+  
+  // 获取我的云养宠物列表
+  getMyCloudPets: () => api.get('/adoptions/applications/my-cloud-pets/'),
+  
+  // 获取指定动物的云养动态
+  getPetActivities: (animalId, params) => api.get(`/adoptions/applications/${animalId}/activities/`, { params })
 }
 
 // 基地相关API

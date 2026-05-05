@@ -162,6 +162,54 @@
                 <label for="health_status">健康状况</label>
                 <input type="text" id="health_status" v-model="newAnimal.health_status">
               </div>
+              
+              <!-- 性格特征评估（可选） -->
+              <div class="form-group personality-section">
+                <div class="section-header" @click="togglePersonalitySection">
+                  <h4>🧠 性格特征评估（OCEAN模型）</h4>
+                  <span class="toggle-icon">{{ showPersonalitySection ? '▼' : '▶' }}</span>
+                </div>
+                <div class="section-content" v-if="showPersonalitySection">
+                  <p class="help-text">请根据动物的实际表现评分（1-5分，1=很低，5=很高）</p>
+                  
+                  <div class="trait-inputs">
+                    <div class="trait-item">
+                      <label for="openness">开放性 (Openness)</label>
+                      <input type="number" id="openness" v-model.number="newAnimal.animal_openness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">好奇心、创造力、对新事物的接受度</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="conscientiousness">尽责性 (Conscientiousness)</label>
+                      <input type="number" id="conscientiousness" v-model.number="newAnimal.animal_conscientiousness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">规律性、整洁度、服从性</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="extraversion">外向性 (Extraversion)</label>
+                      <input type="number" id="extraversion" v-model.number="newAnimal.animal_extraversion" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">活跃度、社交性、能量水平</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="agreeableness">宜人性 (Agreeableness)</label>
+                      <input type="number" id="agreeableness" v-model.number="newAnimal.animal_agreeableness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">友善度、温顺度、亲和力</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="neuroticism">神经质 (Neuroticism)</label>
+                      <input type="number" id="neuroticism" v-model.number="newAnimal.animal_neuroticism" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">情绪稳定性、焦虑程度（分数越高越不稳定）</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div class="form-group">
                 <label for="found_place">发现地点</label>
                 <input type="text" id="found_place" v-model="newAnimal.found_place">
@@ -254,6 +302,54 @@
               <div class="form-group">
                 <label for="edit-health_status">健康状况</label>
                 <input type="text" id="edit-health_status" v-model="editAnimal.health_status">
+              </div>
+              
+              <!-- 性格特征评估（可选） -->
+              <div class="form-group personality-section">
+                <div class="section-header" @click="toggleEditPersonalitySection">
+                  <h4>🧠 性格特征评估（OCEAN模型）</h4>
+                  <span class="toggle-icon">{{ showEditPersonalitySection ? '▼' : '▶' }}</span>
+                </div>
+                <div class="section-content" v-if="showEditPersonalitySection">
+                  <p class="help-text">请根据动物的实际表现评分（1-5分，1=很低，5=很高）</p>
+                  
+                  <div class="trait-inputs">
+                    <div class="trait-item">
+                      <label for="edit-openness">开放性 (Openness)</label>
+                      <input type="number" id="edit-openness" v-model.number="editAnimal.animal_openness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">好奇心、创造力、对新事物的接受度</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="edit-conscientiousness">尽责性 (Conscientiousness)</label>
+                      <input type="number" id="edit-conscientiousness" v-model.number="editAnimal.animal_conscientiousness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">规律性、整洁度、服从性</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="edit-extraversion">外向性 (Extraversion)</label>
+                      <input type="number" id="edit-extraversion" v-model.number="editAnimal.animal_extraversion" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">活跃度、社交性、能量水平</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="edit-agreeableness">宜人性 (Agreeableness)</label>
+                      <input type="number" id="edit-agreeableness" v-model.number="editAnimal.animal_agreeableness" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">友善度、温顺度、亲和力</span>
+                    </div>
+                    
+                    <div class="trait-item">
+                      <label for="edit-neuroticism">神经质 (Neuroticism)</label>
+                      <input type="number" id="edit-neuroticism" v-model.number="editAnimal.animal_neuroticism" 
+                             min="1" max="5" step="0.1" placeholder="3.0">
+                      <span class="trait-desc">情绪稳定性、焦虑程度（分数越高越不稳定）</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="form-group">
                 <label for="edit-found_place">发现地点</label>
@@ -442,7 +538,13 @@ export default {
         health_status: '',
         found_place: '',
         found_date: '',
-        images: []
+        images: [],
+        // 性格特征字段
+        animal_openness: null,
+        animal_conscientiousness: null,
+        animal_extraversion: null,
+        animal_agreeableness: null,
+        animal_neuroticism: null
       },
       editAnimal: {
         id: '',
@@ -457,7 +559,13 @@ export default {
         health_status: '',
         found_place: '',
         found_date: '',
-        images: []
+        images: [],
+        // 性格特征字段
+        animal_openness: null,
+        animal_conscientiousness: null,
+        animal_extraversion: null,
+        animal_agreeableness: null,
+        animal_neuroticism: null
       },
       loading: false,
       error: '',
@@ -465,7 +573,10 @@ export default {
       showAdoptionModal: false,
       adoptionApplications: [],
       loadingApplications: false,
-      currentAnimalId: null
+      currentAnimalId: null,
+      // 性格特征区域显示控制
+      showPersonalitySection: false,
+      showEditPersonalitySection: false
     }
   },
   computed: {
@@ -1133,6 +1244,13 @@ export default {
       if (!dateString) return ''
       const date = new Date(dateString)
       return date.toLocaleString('zh-CN')
+    },
+    // 切换性格特征区域显示
+    togglePersonalitySection() {
+      this.showPersonalitySection = !this.showPersonalitySection
+    },
+    toggleEditPersonalitySection() {
+      this.showEditPersonalitySection = !this.showEditPersonalitySection
     }
   }
 }
@@ -2005,6 +2123,95 @@ export default {
   
   .upload-icon {
     font-size: 36px;
+  }
+}
+
+/* 性格特征区域样式 */
+.personality-section {
+  margin-top: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.section-header:hover {
+  background-color: #e9ecef;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.toggle-icon {
+  font-size: 14px;
+  color: #666;
+}
+
+.section-content {
+  padding: 20px;
+  background-color: #fff;
+}
+
+.help-text {
+  margin: 0 0 15px 0;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.trait-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.trait-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.trait-item label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.trait-item input[type="number"] {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.trait-item input[type="number"]:focus {
+  outline: none;
+  border-color: #ff9a3d;
+  box-shadow: 0 0 0 2px rgba(255, 154, 61, 0.1);
+}
+
+.trait-desc {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .trait-inputs {
+    grid-template-columns: 1fr;
   }
 }
 </style>

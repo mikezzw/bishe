@@ -7,6 +7,7 @@
           <router-link to="/" class="nav-item">首页</router-link>
           <router-link to="/animals" class="nav-item">动物列表</router-link>
           <router-link to="/adoptions" class="nav-item">领养申请</router-link>
+          <router-link to="/cloud-pets" class="nav-item">我的云养</router-link>
           <router-link to="/shelters" class="nav-item">动物基地</router-link>
           <router-link to="/community" class="nav-item">社区</router-link>
           <template v-if="user">

@@ -1,0 +1,1432 @@
+-- ============================================
+-- 动物领养系统数据库建表脚本
+-- Database: AnimalAdoptSystem
+-- ============================================
+erDiagram
+    User ||--o{ Animal : "manages(1:N)"
+    User ||--o{ AdoptionApplication : "applies_as_applicant(1:N)"
+    User ||--o{ AdoptionApplication : "reviews_as_reviewer(1:N)"
+    User ||--o{ AdoptionMatch : "matches_with(1:N)"
+    User ||--o{ Post : "authors(1:N)"
+    User ||--o{ Comment : "comments(1:N)"
+    User ||--o{ Notification : "receives_as_recipient(1:N)"
+    User ||--o{ Notification : "sends_as_sender(1:N)"
+    User ||--o{ Report : "makes_as_reporter(1:N)"
+    User ||--o{ Report : "handles_as_moderator(1:N)"
+    User ||--o{ ContentModeration : "moderates(1:N)"
+    User ||--o{ UserFeedback : "submits(1:N)"
+    User ||--o{ UserFeedback : "processes(1:N)"
+    User ||--o{ ShelterStaff : "works_as(1:N)"
+    User ||--o{ Donation : "donates(1:N)"
+    User ||--o{ InteractionApplication : "applies_as_applicant(1:N)"
+    User ||--o{ InteractionApplication : "reviews_as_reviewer(1:N)"
+    User ||--|| VolunteerProfile : "has_profile(1:1)"
+    User ||--o{ VolunteerTask : "assigned_to_tasks(1:N)"
+    User ||--o{ VolunteerTask : "creates_tasks(1:N)"
+    User ||--o{ VolunteerActivity : "organizes(1:N)"
+    User ||--o{ ActivityParticipant : "participates(1:N)"
+
+    Shelter ||--o{ Animal : "houses(1:N)"
+    Shelter ||--o{ ShelterActivity : "hosts(1:N)"
+    Shelter ||--o{ ShelterStaff : "employs(1:N)"
+    Shelter ||--o{ Donation : "receives(1:N)"
+    Shelter ||--o{ InteractionApplication : "receives_applications(1:N)"
+    Shelter ||--o{ VolunteerActivity : "affiliated_with(1:N)"
+
+    Animal ||--o{ AdoptionApplication : "receives_applications(1:N)"
+    Animal ||--o{ AdoptionMatch : "matched_with(1:N)"
+    Animal ||--o{ InteractionApplication : "interacts_with(1:N)"
+
+    Post ||--o{ Comment : "has_comments(1:N)"
+    Comment ||--o{ Comment : "replies_to_self_reference(1:N)"
+
+    VolunteerActivity ||--o{ ActivityParticipant : "has_participants(1:N)"
+
+    Donation ||--o{ DonationUsage : "tracks_usage(1:N)"
+
+    User {
+        int id PK
+        string username
+        string password
+        string email
+        string user_type "normal/volunteer/shelter/admin"
+        string phone
+        string avatar
+        string address
+        text bio
+        int shelter_id FK "if user_type=shelter"
+        float openness "1-5 OCEAN"
+        float conscientiousness "1-5 OCEAN"
+        float extraversion "1-5 OCEAN"
+        float agreeableness "1-5 OCEAN"
+        float neuroticism "1-5 OCEAN"
+        datetime created_at
+        datetime updated_at
+    }
+
+    Animal {
+        int id PK
+        string name
+        string species "cat/dog/other"
+        string breed
+        int age "months"
+        string gender "male/female/unknown"
+        float weight "kg"
+        string status "available/adopted/pending/medical"
+        text description
+        text personality
+        text health_status
+        json images "URL array"
+        string found_place
+        date found_date
+        int shelter_id FK
+        float animal_openness "1-5 OCEAN"
+        float animal_conscientiousness "1-5 OCEAN"
+        float animal_extraversion "1-5 OCEAN"
+        float animal_agreeableness "1-5 OCEAN"
+        float animal_neuroticism "1-5 OCEAN"
+        datetime created_at
+        datetime updated_at
+    }
+
+    Shelter {
+        int id PK
+        string name
+        text description
+        string address
+        string contact_name
+        string contact_phone
+        string email
+        string website
+        int capacity
+        int current_animals
+        json qr_code "Base64 array"
+        string status "active/inactive"
+        datetime created_at
+        datetime updated_at
+    }
+
+    AdoptionApplication {
+        int id PK
+        int applicant_id FK "→User"
+        int animal_id FK "→Animal"
+        string status "pending/approved/rejected/completed/cancelled"
+        text application_reason
+        text personal_info
+        string contact_phone
+        string contact_address
+        datetime created_at
+        datetime updated_at
+        datetime reviewed_at
+        text review_comments
+        int reviewer_id FK "→User nullable"
+    }
+
+    AdoptionMatch {
+        int id PK
+        int user_id FK "→User"
+        int animal_id FK "→Animal"
+        float match_score "0-1 or 0-100"
+        text match_reason
+        datetime created_at
+    }
+
+    Post {
+        int id PK
+        string title
+        text content
+        int author_id FK "→User"
+        string category
+        json images "URL array"
+        int views "default 0"
+        int likes "default 0"
+        datetime created_at
+        datetime updated_at
+    }
+
+    Comment {
+        int id PK
+        int post_id FK "→Post"
+        int author_id FK "→User"
+        text content
+        int parent_id FK "→Comment nullable self-reference"
+        datetime created_at
+    }
+
+    Notification {
+        int id PK
+        int recipient_id FK "→User"
+        int sender_id FK "→User nullable"
+        string type "like/comment/system/adoption"
+        text content
+        int related_id "related object ID"
+        boolean is_read "default false"
+        datetime created_at
+    }
+
+    Report {
+        int id PK
+        int reporter_id FK "→User"
+        string report_type "post/comment/user"
+        int target_id "reported object ID"
+        string reason "spam/harassment/inappropriate/copyright/other"
+        text description
+        string status "pending/reviewing/resolved/dismissed"
+        int moderator_id FK "→User nullable"
+        text resolution_notes
+        datetime created_at
+        datetime updated_at
+        datetime resolved_at
+    }
+
+    ContentModeration {
+        int id PK
+        int moderator_id FK "→User"
+        string content_type "post/comment"
+        int content_id "Post or Comment ID"
+        string action "approve/reject/delete/warn/ban"
+        text reason
+        datetime created_at
+    }
+
+    UserFeedback {
+        int id PK
+        int user_id FK "→User"
+        string feedback_type "complaint/suggestion/bug/other"
+        string priority "low/medium/high"
+        string title
+        text content
+        string contact_info "optional"
+        string status "pending/reviewing/resolved/dismissed"
+        text admin_notes
+        int processed_by_id FK "→User nullable"
+        datetime created_at
+        datetime updated_at
+        datetime processed_at
+    }
+
+    ShelterActivity {
+        int id PK
+        int shelter_id FK "→Shelter"
+        string title
+        text description
+        string activity_type "adoption/volunteer/fundraising/education/other"
+        string location
+        datetime start_time
+        datetime end_time
+        int capacity
+        string status "upcoming/ongoing/completed/cancelled"
+        int created_by_id FK "→User"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ShelterStaff {
+        int id PK
+        int shelter_id FK "→Shelter"
+        int user_id FK "→User"
+        string role "manager/staff/volunteer"
+        datetime joined_at
+    }
+
+    Donation {
+        int id PK
+        int donor_id FK "→User nullable"
+        string donor_name "for anonymous donations"
+        int shelter_id FK "→Shelter"
+        decimal amount "nullable for non-money"
+        text goods_description "nullable"
+        text service_description "nullable"
+        string donation_type "money/goods/service"
+        string status "pending/completed/cancelled"
+        string transaction_id
+        datetime created_at
+        datetime updated_at
+    }
+
+    DonationUsage {
+        int id PK
+        int donation_id FK "→Donation"
+        decimal amount
+        string usage_type "food/medical/facility/staff/other"
+        string purpose
+        text description
+        json attachments "receipt URLs"
+        int approver_id FK "→User nullable"
+        date usage_date
+        datetime created_at
+        datetime updated_at
+    }
+
+    InteractionApplication {
+        int id PK
+        int applicant_id FK "→User"
+        int shelter_id FK "→Shelter"
+        int animal_id FK "→Animal nullable"
+        string application_type "visit/volunteer/foster/other"
+        text purpose
+        datetime desired_date
+        string status "pending/approved/rejected/completed"
+        text review_comments
+        int reviewer_id FK "→User nullable"
+        datetime created_at
+        datetime updated_at
+        datetime reviewed_at
+    }
+
+    VolunteerProfile {
+        int user_id PK_FK "→User (OneToOne)"
+        string name
+        string gender "male/female"
+        int age
+        string education
+        string occupation
+        string skills
+        string availability
+        text experience
+        text motivation
+        string status "pending/approved/rejected"
+        datetime created_at
+        datetime updated_at
+    }
+
+    VolunteerTask {
+        int id PK
+        string title
+        text description
+        string location
+        datetime start_time
+        datetime end_time
+        string required_skills
+        string status "pending/assigned/in_progress/completed/cancelled"
+        int assigned_to_id FK "→User nullable"
+        int created_by_id FK "→User"
+        datetime created_at
+        datetime updated_at
+    }
+
+    VolunteerActivity {
+        int id PK
+        string name
+        text description
+        string location
+        datetime start_time
+        datetime end_time
+        int capacity
+        string status "planning/upcoming/ongoing/completed/cancelled"
+        int organizer_id FK "→User"
+        int shelter_id FK "→Shelter nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ActivityParticipant {
+        int id PK
+        int activity_id FK "→VolunteerActivity"
+        int participant_id FK "→User"
+        string status "registered/attended/absent"
+        datetime registered_at
+    }
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- --------------------------------------------
+-- 1. 用户表 (users)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
+    `password` VARCHAR(128) NOT NULL COMMENT '密码',
+    `last_login` DATETIME(6) DEFAULT NULL COMMENT '最后登录时间',
+    `is_superuser` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否超级管理员',
+    `username` VARCHAR(150) NOT NULL UNIQUE COMMENT '用户名',
+    `first_name` VARCHAR(150) NOT NULL DEFAULT '' COMMENT '名',
+    `last_name` VARCHAR(150) NOT NULL DEFAULT '' COMMENT '姓',
+    `email` VARCHAR(254) NOT NULL DEFAULT '' COMMENT '邮箱',
+    `is_staff` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否是工作人员',
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否激活',
+    `date_joined` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '注册时间',
+    `user_type` VARCHAR(20) NOT NULL DEFAULT 'normal' COMMENT '用户类型: normal/volunteer/shelter/admin',
+    `phone` VARCHAR(11) DEFAULT NULL COMMENT '手机号',
+    `avatar` VARCHAR(100) DEFAULT NULL COMMENT '头像URL',
+    `address` VARCHAR(200) DEFAULT NULL COMMENT '地址',
+    `bio` TEXT DEFAULT NULL COMMENT '个人简介',
+    `shelter_id` INT DEFAULT NULL COMMENT '关联基地ID(仅shelter类型)',
+    `openness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '开放性(OCEAN)',
+    `conscientiousness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '尽责性(OCEAN)',
+    `extraversion` FLOAT NOT NULL DEFAULT 3.0 COMMENT '外向性(OCEAN)',
+    `agreeableness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '宜人性(OCEAN)',
+    `neuroticism` FLOAT NOT NULL DEFAULT 3.0 COMMENT '神经质(OCEAN)',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_user_type` (`user_type`),
+    INDEX `idx_shelter_id` (`shelter_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- --------------------------------------------
+-- 2. 基地表 (shelters)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `shelters`;
+CREATE TABLE `shelters` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '基地ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '基地名称',
+    `description` TEXT NOT NULL COMMENT '基地描述',
+    `address` VARCHAR(200) NOT NULL COMMENT '基地地址',
+    `contact_name` VARCHAR(50) NOT NULL COMMENT '联系人',
+    `contact_phone` VARCHAR(11) NOT NULL COMMENT '联系电话',
+    `email` VARCHAR(254) NOT NULL COMMENT '邮箱',
+    `website` VARCHAR(200) DEFAULT NULL COMMENT '网站',
+    `capacity` INT NOT NULL COMMENT '容纳能力',
+    `current_animals` INT NOT NULL DEFAULT 0 COMMENT '当前动物数量',
+    `qr_code` JSON DEFAULT NULL COMMENT '收款码Base64数据',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'active' COMMENT '状态: active/inactive',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='动物基地表';
+
+-- 添加用户表的外键约束
+ALTER TABLE `users`
+    ADD CONSTRAINT `fk_user_shelter`
+    FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+    ON DELETE SET NULL;
+
+-- --------------------------------------------
+-- 3. 动物表 (animals)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `animals`;
+CREATE TABLE `animals` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '动物ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '动物名称',
+    `species` VARCHAR(20) NOT NULL DEFAULT 'cat' COMMENT '物种: cat/dog/other',
+    `breed` VARCHAR(50) NOT NULL COMMENT '品种',
+    `age` INT NOT NULL COMMENT '年龄(月)',
+    `gender` VARCHAR(20) NOT NULL DEFAULT 'unknown' COMMENT '性别: male/female/unknown',
+    `weight` FLOAT NOT NULL COMMENT '体重(kg)',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'available' COMMENT '状态: available/adopted/pending/medical',
+    `description` TEXT NOT NULL COMMENT '描述',
+    `personality` TEXT NOT NULL COMMENT '性格特点',
+    `health_status` TEXT NOT NULL COMMENT '健康状况',
+    `images` JSON NOT NULL DEFAULT (JSON_ARRAY()) COMMENT '图片URL列表',
+    `found_place` VARCHAR(200) NOT NULL COMMENT '发现地点',
+    `found_date` DATE NOT NULL COMMENT '发现日期',
+    `shelter_id` INT DEFAULT NULL COMMENT '所属基地ID',
+    `animal_openness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '动物开放性(OCEAN)',
+    `animal_conscientiousness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '动物尽责性(OCEAN)',
+    `animal_extraversion` FLOAT NOT NULL DEFAULT 3.0 COMMENT '动物外向性(OCEAN)',
+    `animal_agreeableness` FLOAT NOT NULL DEFAULT 3.0 COMMENT '动物宜人性(OCEAN)',
+    `animal_neuroticism` FLOAT NOT NULL DEFAULT 3.0 COMMENT '动物神经质(OCEAN)',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_status` (`status`),
+    INDEX `idx_species` (`species`),
+    INDEX `idx_shelter_id` (`shelter_id`),
+    CONSTRAINT `fk_animal_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='流浪动物表';
+
+-- --------------------------------------------
+-- 4. 领养申请表 (adoption_applications)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `adoption_applications`;
+CREATE TABLE `adoption_applications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '申请ID',
+    `applicant_id` INT NOT NULL COMMENT '申请人ID',
+    `animal_id` INT NOT NULL COMMENT '动物ID',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态: pending/approved/rejected/completed/cancelled',
+    `application_reason` TEXT NOT NULL COMMENT '申请原因',
+    `personal_info` TEXT NOT NULL COMMENT '个人情况说明',
+    `contact_phone` VARCHAR(11) NOT NULL COMMENT '联系电话',
+    `contact_address` VARCHAR(200) NOT NULL COMMENT '联系地址',
+    `review_comments` TEXT DEFAULT NULL COMMENT '审核意见',
+    `reviewer_id` INT DEFAULT NULL COMMENT '审核人ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '申请时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `reviewed_at` DATETIME(6) DEFAULT NULL COMMENT '审核时间',
+
+    INDEX `idx_applicant_id` (`applicant_id`),
+    INDEX `idx_animal_id` (`animal_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_reviewer_id` (`reviewer_id`),
+    CONSTRAINT `fk_adoption_applicant`
+        FOREIGN KEY (`applicant_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_adoption_animal`
+        FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_adoption_reviewer`
+        FOREIGN KEY (`reviewer_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='领养申请表';
+
+-- --------------------------------------------
+-- 5. 领养匹配表 (adoption_matches)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `adoption_matches`;
+CREATE TABLE `adoption_matches` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '匹配ID',
+    `user_id` INT NOT NULL COMMENT '用户ID',
+    `animal_id` INT NOT NULL COMMENT '动物ID',
+    `match_score` FLOAT NOT NULL COMMENT '匹配分数(0-1或0-100)',
+    `match_reason` TEXT NOT NULL COMMENT '匹配原因',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_animal_id` (`animal_id`),
+    INDEX `idx_match_score` (`match_score`),
+    CONSTRAINT `fk_match_user`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_match_animal`
+        FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='领养匹配表';
+
+-- --------------------------------------------
+-- 6. 帖子表 (community_posts)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `community_posts`;
+CREATE TABLE `community_posts` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '帖子ID',
+    `title` VARCHAR(100) NOT NULL COMMENT '标题',
+    `content` TEXT NOT NULL COMMENT '内容',
+    `author_id` INT NOT NULL COMMENT '作者ID',
+    `category` VARCHAR(50) NOT NULL COMMENT '分类',
+    `images` JSON NOT NULL DEFAULT (JSON_ARRAY()) COMMENT '图片URL列表',
+    `views` INT NOT NULL DEFAULT 0 COMMENT '浏览量',
+    `likes` INT NOT NULL DEFAULT 0 COMMENT '点赞数',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_author_id` (`author_id`),
+    INDEX `idx_category` (`category`),
+    INDEX `idx_created_at` (`created_at`),
+    CONSTRAINT `fk_post_author`
+        FOREIGN KEY (`author_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='社区帖子表';
+
+-- --------------------------------------------
+-- 7. 评论表 (community_comments)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `community_comments`;
+CREATE TABLE `community_comments` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '评论ID',
+    `post_id` INT NOT NULL COMMENT '帖子ID',
+    `author_id` INT NOT NULL COMMENT '评论者ID',
+    `content` TEXT NOT NULL COMMENT '评论内容',
+    `parent_id` INT DEFAULT NULL COMMENT '父评论ID(用于回复)',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '评论时间',
+
+    INDEX `idx_post_id` (`post_id`),
+    INDEX `idx_author_id` (`author_id`),
+    INDEX `idx_parent_id` (`parent_id`),
+    CONSTRAINT `fk_comment_post`
+        FOREIGN KEY (`post_id`) REFERENCES `community_posts` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_comment_author`
+        FOREIGN KEY (`author_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_comment_parent`
+        FOREIGN KEY (`parent_id`) REFERENCES `community_comments` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='社区评论表';
+
+-- --------------------------------------------
+-- 8. 通知表 (community_notifications)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `community_notifications`;
+CREATE TABLE `community_notifications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '通知ID',
+    `recipient_id` INT NOT NULL COMMENT '接收者ID',
+    `sender_id` INT DEFAULT NULL COMMENT '发送者ID',
+    `type` VARCHAR(20) NOT NULL COMMENT '类型: like/comment/system/adoption',
+    `content` TEXT NOT NULL COMMENT '通知内容',
+    `related_id` INT DEFAULT NULL COMMENT '相关对象ID',
+    `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已读',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+
+    INDEX `idx_recipient_id` (`recipient_id`),
+    INDEX `idx_sender_id` (`sender_id`),
+    INDEX `idx_is_read` (`is_read`),
+    INDEX `idx_created_at` (`created_at`),
+    CONSTRAINT `fk_notification_recipient`
+        FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_notification_sender`
+        FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';
+
+-- --------------------------------------------
+-- 9. 举报记录表 (community_reports)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `community_reports`;
+CREATE TABLE `community_reports` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '举报ID',
+    `reporter_id` INT NOT NULL COMMENT '举报人ID',
+    `report_type` VARCHAR(20) NOT NULL COMMENT '举报类型: post/comment/user',
+    `target_id` INT NOT NULL COMMENT '目标对象ID',
+    `reason` VARCHAR(20) NOT NULL COMMENT '举报原因: spam/harassment/inappropriate/copyright/other',
+    `description` TEXT NOT NULL COMMENT '详细描述',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '处理状态: pending/reviewing/resolved/dismissed',
+    `moderator_id` INT DEFAULT NULL COMMENT '处理人ID',
+    `resolution_notes` TEXT DEFAULT NULL COMMENT '处理说明',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '举报时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `resolved_at` DATETIME(6) DEFAULT NULL COMMENT '解决时间',
+
+    INDEX `idx_reporter_id` (`reporter_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_moderator_id` (`moderator_id`),
+    CONSTRAINT `fk_report_reporter`
+        FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_report_moderator`
+        FOREIGN KEY (`moderator_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='举报记录表';
+
+-- --------------------------------------------
+-- 10. 内容审核记录表 (content_moderation)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `content_moderation`;
+CREATE TABLE `content_moderation` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '审核ID',
+    `moderator_id` INT NOT NULL COMMENT '审核员ID',
+    `content_type` VARCHAR(20) NOT NULL COMMENT '内容类型: post/comment',
+    `content_id` INT NOT NULL COMMENT '内容ID',
+    `action` VARCHAR(20) NOT NULL COMMENT '操作类型: approve/reject/delete/warn/ban',
+    `reason` TEXT NOT NULL COMMENT '操作原因',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '操作时间',
+
+    INDEX `idx_moderator_id` (`moderator_id`),
+    INDEX `idx_content_type` (`content_type`),
+    CONSTRAINT `fk_moderation_moderator`
+        FOREIGN KEY (`moderator_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='内容审核记录表';
+
+-- --------------------------------------------
+-- 11. 用户反馈表 (user_feedbacks)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `user_feedbacks`;
+CREATE TABLE `user_feedbacks` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '反馈ID',
+    `user_id` INT NOT NULL COMMENT '反馈用户ID',
+    `feedback_type` VARCHAR(20) NOT NULL COMMENT '反馈类型: complaint/suggestion/bug/other',
+    `priority` VARCHAR(20) NOT NULL DEFAULT 'medium' COMMENT '优先级: low/medium/high',
+    `title` VARCHAR(200) NOT NULL COMMENT '标题',
+    `content` TEXT NOT NULL COMMENT '详细内容',
+    `contact_info` VARCHAR(100) DEFAULT NULL COMMENT '联系方式(选填)',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '处理状态: pending/reviewing/resolved/dismissed',
+    `admin_notes` TEXT DEFAULT NULL COMMENT '管理员备注',
+    `processed_by_id` INT DEFAULT NULL COMMENT '处理人ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `processed_at` DATETIME(6) DEFAULT NULL COMMENT '处理时间',
+
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_priority` (`priority`),
+    INDEX `idx_processed_by_id` (`processed_by_id`),
+    CONSTRAINT `fk_feedback_user`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_feedback_processor`
+        FOREIGN KEY (`processed_by_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户反馈表';
+
+-- --------------------------------------------
+-- 12. 基地活动表 (shelter_activities)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `shelter_activities`;
+CREATE TABLE `shelter_activities` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '活动ID',
+    `shelter_id` INT NOT NULL COMMENT '所属基地ID',
+    `title` VARCHAR(100) NOT NULL COMMENT '活动标题',
+    `description` TEXT NOT NULL COMMENT '活动描述',
+    `activity_type` VARCHAR(20) NOT NULL COMMENT '活动类型: adoption/volunteer/fundraising/education/other',
+    `location` VARCHAR(200) NOT NULL COMMENT '活动地点',
+    `start_time` DATETIME(6) NOT NULL COMMENT '开始时间',
+    `end_time` DATETIME(6) NOT NULL COMMENT '结束时间',
+    `capacity` INT NOT NULL COMMENT '参与人数上限',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'upcoming' COMMENT '活动状态: upcoming/ongoing/completed/cancelled',
+    `created_by_id` INT NOT NULL COMMENT '创建人ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_shelter_id` (`shelter_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_start_time` (`start_time`),
+    CONSTRAINT `fk_activity_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_activity_creator`
+        FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='基地活动表';
+
+-- --------------------------------------------
+-- 13. 基地工作人员表 (shelter_staff)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `shelter_staff`;
+CREATE TABLE `shelter_staff` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '员工ID',
+    `shelter_id` INT NOT NULL COMMENT '所属基地ID',
+    `user_id` INT NOT NULL COMMENT '用户ID',
+    `role` VARCHAR(20) NOT NULL COMMENT '角色: manager/staff/volunteer',
+    `joined_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '加入时间',
+
+    UNIQUE KEY `uk_shelter_user` (`shelter_id`, `user_id`),
+    INDEX `idx_shelter_id` (`shelter_id`),
+    INDEX `idx_user_id` (`user_id`),
+    CONSTRAINT `fk_staff_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_staff_user`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='基地工作人员表';
+
+-- --------------------------------------------
+-- 14. 捐赠记录表 (shelters_donation)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `shelters_donation`;
+CREATE TABLE `shelters_donation` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '捐赠ID',
+    `donor_id` INT DEFAULT NULL COMMENT '捐赠人ID(可为空表示匿名)',
+    `donor_name` VARCHAR(100) DEFAULT NULL COMMENT '捐赠人姓名',
+    `shelter_id` INT NOT NULL COMMENT '接收基地ID',
+    `amount` DECIMAL(10, 2) DEFAULT NULL COMMENT '捐赠金额',
+    `goods_description` TEXT DEFAULT NULL COMMENT '捐赠物品描述',
+    `service_description` TEXT DEFAULT NULL COMMENT '捐赠服务描述',
+    `donation_type` VARCHAR(20) NOT NULL COMMENT '捐赠类型: money/goods/service',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态: pending/completed/cancelled',
+    `transaction_id` VARCHAR(100) DEFAULT NULL COMMENT '交易ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '捐赠时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_donor_id` (`donor_id`),
+    INDEX `idx_shelter_id` (`shelter_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_donation_type` (`donation_type`),
+    CONSTRAINT `fk_donation_donor`
+        FOREIGN KEY (`donor_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL,
+    CONSTRAINT `fk_donation_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='捐赠记录表';
+
+-- --------------------------------------------
+-- 15. 捐赠使用记录表 (shelters_donationusage)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `shelters_donationusage`;
+CREATE TABLE `shelters_donationusage` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '使用记录ID',
+    `donation_id` INT NOT NULL COMMENT '对应捐赠ID',
+    `amount` DECIMAL(10, 2) NOT NULL COMMENT '使用金额',
+    `usage_type` VARCHAR(20) NOT NULL COMMENT '使用类型: food/medical/facility/staff/other',
+    `purpose` VARCHAR(200) NOT NULL COMMENT '使用目的',
+    `description` TEXT NOT NULL COMMENT '详细说明',
+    `attachments` JSON NOT NULL DEFAULT (JSON_ARRAY()) COMMENT '相关凭证文件URL',
+    `approver_id` INT DEFAULT NULL COMMENT '审批人ID',
+    `usage_date` DATE NOT NULL COMMENT '使用日期',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_donation_id` (`donation_id`),
+    INDEX `idx_usage_type` (`usage_type`),
+    INDEX `idx_approver_id` (`approver_id`),
+    CONSTRAINT `fk_usage_donation`
+        FOREIGN KEY (`donation_id`) REFERENCES `shelters_donation` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_usage_approver`
+        FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='捐赠使用记录表';
+
+-- --------------------------------------------
+-- 16. 互动申请表 (interaction_applications)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `interaction_applications`;
+CREATE TABLE `interaction_applications` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '申请ID',
+    `applicant_id` INT NOT NULL COMMENT '申请人ID',
+    `shelter_id` INT NOT NULL COMMENT '申请基地ID',
+    `animal_id` INT DEFAULT NULL COMMENT '相关动物ID',
+    `application_type` VARCHAR(20) NOT NULL COMMENT '申请类型: visit/volunteer/foster/other',
+    `purpose` TEXT NOT NULL COMMENT '申请目的',
+    `desired_date` DATETIME(6) NOT NULL COMMENT '期望日期',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态: pending/approved/rejected/completed',
+    `review_comments` TEXT DEFAULT NULL COMMENT '审核意见',
+    `reviewer_id` INT DEFAULT NULL COMMENT '审核人ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '申请时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+    `reviewed_at` DATETIME(6) DEFAULT NULL COMMENT '审核时间',
+
+    INDEX `idx_applicant_id` (`applicant_id`),
+    INDEX `idx_shelter_id` (`shelter_id`),
+    INDEX `idx_animal_id` (`animal_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_reviewer_id` (`reviewer_id`),
+    CONSTRAINT `fk_interaction_applicant`
+        FOREIGN KEY (`applicant_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_interaction_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_interaction_animal`
+        FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`)
+        ON DELETE SET NULL,
+    CONSTRAINT `fk_interaction_reviewer`
+        FOREIGN KEY (`reviewer_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='互动申请表';
+
+-- --------------------------------------------
+-- 17. 志愿者资料表 (volunteer_profiles)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `volunteer_profiles`;
+CREATE TABLE `volunteer_profiles` (
+    `user_id` INT PRIMARY KEY COMMENT '用户ID(与User一对一)',
+    `name` VARCHAR(50) NOT NULL COMMENT '姓名',
+    `gender` VARCHAR(10) NOT NULL COMMENT '性别: male/female',
+    `age` INT NOT NULL COMMENT '年龄',
+    `education` VARCHAR(50) NOT NULL COMMENT '学历',
+    `occupation` VARCHAR(100) NOT NULL COMMENT '职业',
+    `skills` VARCHAR(200) NOT NULL COMMENT '技能特长',
+    `availability` VARCHAR(200) NOT NULL COMMENT '可服务时间',
+    `experience` TEXT DEFAULT NULL COMMENT '志愿者经历',
+    `motivation` TEXT DEFAULT NULL COMMENT '志愿服务动机',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '状态: pending/approved/rejected',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    CONSTRAINT `fk_volunteer_profile_user`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='志愿者资料表';
+
+-- --------------------------------------------
+-- 18. 志愿者任务表 (volunteer_tasks)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `volunteer_tasks`;
+CREATE TABLE `volunteer_tasks` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '任务ID',
+    `title` VARCHAR(100) NOT NULL COMMENT '任务标题',
+    `description` TEXT NOT NULL COMMENT '任务描述',
+    `location` VARCHAR(200) NOT NULL COMMENT '任务地点',
+    `start_time` DATETIME(6) NOT NULL COMMENT '开始时间',
+    `end_time` DATETIME(6) NOT NULL COMMENT '结束时间',
+    `required_skills` VARCHAR(200) NOT NULL COMMENT '所需技能',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '任务状态: pending/assigned/in_progress/completed/cancelled',
+    `assigned_to_id` INT DEFAULT NULL COMMENT '分配给用户ID',
+    `created_by_id` INT NOT NULL COMMENT '创建者ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_assigned_to_id` (`assigned_to_id`),
+    INDEX `idx_created_by_id` (`created_by_id`),
+    INDEX `idx_status` (`status`),
+    CONSTRAINT `fk_task_assignee`
+        FOREIGN KEY (`assigned_to_id`) REFERENCES `users` (`id`)
+        ON DELETE SET NULL,
+    CONSTRAINT `fk_task_creator`
+        FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='志愿者任务表';
+
+-- --------------------------------------------
+-- 19. 志愿者活动表 (volunteer_activities)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `volunteer_activities`;
+CREATE TABLE `volunteer_activities` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '活动ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '活动名称',
+    `description` TEXT NOT NULL COMMENT '活动描述',
+    `location` VARCHAR(200) NOT NULL COMMENT '活动地点',
+    `start_time` DATETIME(6) NOT NULL COMMENT '开始时间',
+    `end_time` DATETIME(6) NOT NULL COMMENT '结束时间',
+    `capacity` INT NOT NULL COMMENT '参与人数上限',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'planning' COMMENT '活动状态: planning/upcoming/ongoing/completed/cancelled',
+    `organizer_id` INT NOT NULL COMMENT '组织者ID',
+    `shelter_id` INT DEFAULT NULL COMMENT '所属基地ID',
+    `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+    `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
+
+    INDEX `idx_organizer_id` (`organizer_id`),
+    INDEX `idx_shelter_id` (`shelter_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_start_time` (`start_time`),
+    CONSTRAINT `fk_vol_activity_organizer`
+        FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_vol_activity_shelter`
+        FOREIGN KEY (`shelter_id`) REFERENCES `shelters` (`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='志愿者活动表';
+
+-- --------------------------------------------
+-- 20. 活动参与者表 (activity_participants)
+-- --------------------------------------------
+DROP TABLE IF EXISTS `activity_participants`;
+CREATE TABLE `activity_participants` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '参与记录ID',
+    `activity_id` INT NOT NULL COMMENT '活动ID',
+    `participant_id` INT NOT NULL COMMENT '参与者ID',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'registered' COMMENT '参与状态: registered/attended/absent',
+    `registered_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '报名时间',
+
+    UNIQUE KEY `uk_activity_participant` (`activity_id`, `participant_id`),
+    INDEX `idx_activity_id` (`activity_id`),
+    INDEX `idx_participant_id` (`participant_id`),
+    CONSTRAINT `fk_participant_activity`
+        FOREIGN KEY (`activity_id`) REFERENCES `volunteer_activities` (`id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_participant_user`
+        FOREIGN KEY (`participant_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动参与者表';
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================
+-- 完成！共创建 20 张表
+-- ============================================
+ 模块 1：核心基础模块（用户 + 基地）
+ 模块 2：动物管理模块
+ 模块 3：社区互动模块
+  模块 4：基地运营模块
+   模块 5：志愿服务模块
+
+ 1️⃣ 功能模块图
+ graph TB
+    Root[动物领养系统]
+
+    Root --> UserModule[用户管理模块]
+    Root --> AnimalModule[动物管理模块]
+    Root --> AdoptionModule[领养管理模块]
+    Root --> ShelterModule[基地管理模块]
+    Root --> CommunityModule[社区互动模块]
+    Root --> VolunteerModule[志愿服务模块]
+    Root --> DonationModule[捐赠管理模块]
+    Root --> AIModule[智能推荐模块]
+
+    UserModule --> U1[用户注册/登录]
+    UserModule --> U2[个人信息管理]
+    UserModule --> U3[密码重置/修改]
+    UserModule --> U4[角色权限管理]
+    UserModule --> U5[人格特质测试]
+
+    AnimalModule --> A1[动物信息录入]
+    AnimalModule --> A2[动物信息查询]
+    AnimalModule --> A3[动物状态管理]
+    AnimalModule --> A4[品种AI识别]
+    AnimalModule --> A5[动物性格评估]
+
+    AdoptionModule --> AD1[领养申请提交]
+    AdoptionModule --> AD2[申请审核管理]
+    AdoptionModule --> AD3[领养匹配计算]
+    AdoptionModule --> AD4[我的领养记录]
+    AdoptionModule --> AD5[领养流程跟踪]
+
+    ShelterModule --> S1[基地信息管理]
+    ShelterModule --> S2[基地活动发布]
+    ShelterModule --> S3[工作人员管理]
+    ShelterModule --> S4[互动申请处理]
+    ShelterModule --> S5[基地数据统计]
+
+    CommunityModule --> C1[帖子发布/浏览]
+    CommunityModule --> C2[评论/回复]
+    CommunityModule --> C3[点赞/收藏]
+    CommunityModule --> C4[通知中心]
+    CommunityModule --> C5[内容举报]
+    CommunityModule --> C6[内容审核]
+    CommunityModule --> C7[用户反馈]
+
+    VolunteerModule --> V1[志愿者注册]
+    VolunteerModule --> V2[活动报名]
+    VolunteerModule --> V3[任务分配]
+    VolunteerModule --> V4[参与记录]
+    VolunteerModule --> V5[志愿时长统计]
+
+    DonationModule --> D1[在线捐赠]
+    DonationModule --> D2[捐赠记录查询]
+    DonationModule --> D3[捐赠使用公示]
+    DonationModule --> D4[收款码展示]
+    DonationModule --> D5[捐赠统计分析]
+
+    AIModule --> AI1[性格匹配算法]
+    AIModule --> AI2[智能推荐引擎]
+    AIModule --> AI3[品种图像识别]
+    AIModule --> AI4[匹配度计算]
+
+2️⃣ 核心业务流程图
+📌 领养申请流程
+flowchart TD
+    Start([开始]) --> Login{用户是否登录?}
+    Login -->|否| Register[注册/登录]
+    Register --> Login
+    Login -->|是| BrowseAnimal[浏览可领养动物]
+
+    BrowseAnimal --> ViewDetail[查看动物详情]
+    ViewDetail --> TakeTest{完成性格测试?}
+
+    TakeTest -->|否| PersonalityTest[进行OCEAN性格测试]
+    PersonalityTest --> CalculateMatch[计算匹配度]
+    TakeTest -->|是| CalculateMatch
+
+    CalculateMatch --> ShowResult{匹配度是否合适?}
+    ShowResult -->|不合适| BrowseAnimal
+    ShowResult -->|合适| SubmitApp[提交领养申请]
+
+    SubmitApp --> FillForm[填写申请表单]
+    FillForm --> SubmitToDB[保存到数据库]
+    SubmitToDB --> NotifyShelter[通知基地管理员]
+
+    NotifyShelter --> Review{管理员审核}
+    Review -->|拒绝| RejectApp[拒绝申请]
+    RejectApp --> NotifyUser1[通知申请人]
+    NotifyUser1 --> End1([结束])
+
+    Review -->|通过| ApproveApp[通过申请]
+    ApproveApp --> UpdateStatus[更新动物状态为pending]
+    UpdateStatus --> ArrangeVisit[安排线下探访]
+
+    ArrangeVisit --> VisitResult{探访结果?}
+    VisitResult -->|不满意| RejectApp
+    VisitResult -->|满意| SignContract[签订领养协议]
+
+    SignContract --> CompleteAdoption[完成领养]
+    CompleteAdoption --> UpdateAnimalStatus[更新动物状态为adopted]
+    UpdateAnimalStatus --> NotifyUser2[通知申请人领养成功]
+    NotifyUser2 --> End2([流程结束])
+
+
+📌 捐赠流程
+flowchart TD
+    Start([开始]) --> SelectShelter[选择捐赠基地]
+    SelectShelter --> ChooseType{选择捐赠类型}
+
+    ChooseType -->|金钱捐赠| MoneyDonation[输入捐赠金额]
+    MoneyDonation --> ShowQRCode[显示收款码]
+    ShowQRCode --> UploadProof[上传支付凭证]
+
+    ChooseType -->|物品捐赠| GoodsDonation[填写物品描述]
+    GoodsDonation --> ContactInfo[联系方式]
+
+    ChooseType -->|服务捐赠| ServiceDonation[填写服务内容]
+    ServiceDonation --> ContactInfo
+
+    UploadProof --> CreateRecord[创建捐赠记录]
+    ContactInfo --> CreateRecord
+
+    CreateRecord --> SetPending[状态设为pending]
+    SetPending --> NotifyAdmin[通知管理员确认]
+
+    NotifyAdmin --> AdminCheck{管理员确认}
+    AdminCheck -->|取消| CancelDonation[取消捐赠]
+    CancelDonation --> End1([结束])
+
+    AdminCheck -->|确认| CompleteDonation[标记为completed]
+    CompleteDonation --> ThankUser[发送感谢通知]
+
+    ThankUser --> TrackUsage[追踪资金使用]
+    TrackUsage --> PublicDisplay[公示使用情况]
+    PublicDisplay --> End2([流程结束])
+
+3️⃣ 类图
+classDiagram
+    class User {
+        +int id
+        +string username
+        +string email
+        +string user_type
+        +string phone
+        +string avatar
+        +float openness
+        +float conscientiousness
+        +float extraversion
+        +float agreeableness
+        +float neuroticism
+        +login()
+        +register()
+        +updateProfile()
+        +takePersonalityTest()
+    }
+
+    class Animal {
+        +int id
+        +string name
+        +string species
+        +string breed
+        +int age
+        +string status
+        +float animal_openness
+        +float animal_conscientiousness
+        +float animal_extraversion
+        +float animal_agreeableness
+        +float animal_neuroticism
+        +create()
+        +update()
+        +delete()
+        +getAvailableAnimals()
+    }
+
+    class Shelter {
+        +int id
+        +string name
+        +string address
+        +string contact_phone
+        +int capacity
+        +int current_animals
+        +json qr_code
+        +create()
+        +update()
+        +getAnimals()
+        +getActivities()
+    }
+
+    class AdoptionApplication {
+        +int id
+        +int applicant_id
+        +int animal_id
+        +string status
+        +text application_reason
+        +text personal_info
+        +submit()
+        +review()
+        +approve()
+        +reject()
+    }
+
+    class AdoptionMatch {
+        +int id
+        +int user_id
+        +int animal_id
+        +float match_score
+        +text match_reason
+        +calculateMatch()
+        +getRecommendations()
+    }
+
+    class Post {
+        +int id
+        +string title
+        +text content
+        +int author_id
+        +string category
+        +int views
+        +int likes
+        +create()
+        +update()
+        +delete()
+        +like()
+    }
+
+    class Comment {
+        +int id
+        +int post_id
+        +int author_id
+        +text content
+        +int parent_id
+        +create()
+        +reply()
+        +delete()
+    }
+
+    class VolunteerActivity {
+        +int id
+        +string name
+        +datetime start_time
+        +datetime end_time
+        +int capacity
+        +int organizer_id
+        +create()
+        +register()
+        +cancel()
+    }
+
+    class ActivityParticipant {
+        +int id
+        +int activity_id
+        +int participant_id
+        +string status
+        +register()
+        +attend()
+        +absent()
+    }
+
+    class Donation {
+        +int id
+        +int donor_id
+        +int shelter_id
+        +decimal amount
+        +string donation_type
+        +string status
+        +donate()
+        +confirm()
+        +cancel()
+    }
+
+    class Notification {
+        +int id
+        +int recipient_id
+        +int sender_id
+        +string type
+        +text content
+        +boolean is_read
+        +send()
+        +markAsRead()
+    }
+
+    class PersonalityMatcher {
+        <<algorithm>>
+        +calculateEuclideanDistance()
+        +calculateWeightedCompatibility()
+        +generateMatchReason()
+        +getRecommendedAnimals()
+    }
+
+    User "1" -- "*" AdoptionApplication : submits
+    User "1" -- "*" Post : authors
+    User "1" -- "*" Comment : writes
+    User "1" -- "*" Donation : makes
+    User "1" -- "1" VolunteerProfile : has
+
+    Animal "1" -- "*" AdoptionApplication : receives
+    Animal "1" -- "*" AdoptionMatch : matched with
+
+    Shelter "1" -- "*" Animal : houses
+    Shelter "1" -- "*" Donation : receives
+    Shelter "1" -- "*" VolunteerActivity : hosts
+
+    AdoptionApplication "*" -- "1" User : reviewed by
+
+    Post "1" -- "*" Comment : has
+
+    VolunteerActivity "*" -- "*" User : participates through
+    ActivityParticipant ..> VolunteerActivity : links
+    ActivityParticipant ..> User : links
+
+    AdoptionMatch ..> PersonalityMatcher : uses
+
+4️⃣ 时序图
+sequenceDiagram
+    participant U as 用户
+    participant F as 前端
+    participant A as Animals API
+    participant M as Match Algorithm
+    participant DB as 数据库
+
+    U->>F: 浏览动物列表
+    F->>A: GET /animals/?status=available
+    A->>DB: 查询可领养动物
+    DB-->>A: 返回动物列表
+    A-->>F: 返回JSON数据
+    F-->>U: 显示动物卡片
+
+    U->>F: 点击"性格测试"
+    F->>U: 显示OCEAN测试问卷
+
+    U->>F: 完成测试并提交
+    F->>M: POST /personality-match/<br/>{user_scores, animal_id}
+
+    Note over M: 计算匹配度
+    M->>DB: 获取动物性格数据
+    DB-->>M: 返回animal OCEAN分数
+
+    M->>M: 计算欧几里得距离
+    M->>M: 应用权重系数<br/>宜人性25%<br/>外向性20%<br/>尽责性20%<br/>开放性20%<br/>神经质15%
+    M->>M: 生成匹配理由
+
+    M-->>F: 返回匹配结果<br/>{match_percentage, match_reason}
+    F-->>U: 显示匹配度和建议
+
+    alt 匹配度高
+        U->>F: 申请领养
+        F->>A: POST /adoption-applications/
+        A->>DB: 创建申请记录
+        DB-->>A: 返回成功
+        A-->>F: 返回申请ID
+        F-->>U: 显示提交成功
+    else 匹配度低
+        U->>F: 继续浏览其他动物
+    end
+
+📌 领养审核流程时序图
+sequenceDiagram
+    participant U as 申请人
+    participant F as 前端
+    participant API as Adoption API
+    participant DB as 数据库
+    participant N as 通知服务
+    participant S as 基地管理员
+
+    U->>F: 提交领养申请
+    F->>API: POST /adoption-applications/
+    API->>DB: INSERT adoption_application<br/>status='pending'
+    DB-->>API: 返回申请ID
+
+    API->>N: 触发通知
+    N->>S: 发送审核通知
+    N-->>API: 通知已发送
+    API-->>F: 返回提交成功
+    F-->>U: 显示"等待审核"
+
+    S->>F: 查看待审核申请
+    F->>API: GET /adoption-applications/?status=pending
+    API->>DB: 查询待审核申请
+    DB-->>API: 返回列表
+    API-->>F: 返回申请数据
+    F-->>S: 显示申请详情
+
+    S->>F: 审核申请(通过/拒绝)
+    F->>API: PATCH /adoption-applications/{id}/<br/>{status, review_comments}
+
+    alt 审核通过
+        API->>DB: UPDATE status='approved'
+        API->>DB: UPDATE animal.status='pending'
+        API->>N: 通知申请人通过
+        N->>U: 发送审核通过通知
+    else 审核拒绝
+        API->>DB: UPDATE status='rejected'
+        API->>N: 通知申请人拒绝
+        N->>U: 发送拒绝原因
+    end
+
+    DB-->>API: 更新成功
+    API-->>F: 返回审核结果
+    F-->>S: 显示操作成功
+
+
+5️⃣ 核心算法流程图
+flowchart TD
+    Start([开始]) --> Input[输入用户OCEAN分数和动物ID]
+
+    Input --> ValidateData{数据验证}
+    ValidateData -->|无效| Error1[返回错误信息]
+    Error1 --> End1([结束])
+
+    ValidateData -->|有效| GetAnimalData[从数据库获取动物OCEAN分数]
+
+    GetAnimalData --> CalcOpenness[计算开放性匹配度<br/>openness_match = 1 - |user_open - animal_open| / 4]
+    CalcOpenness --> CalcConsc[计算尽责性匹配度<br/>consc_match = 1 - |user_consc - animal_consc| / 4]
+    CalcConsc --> CalcExtra[计算外向性匹配度<br/>extra_match = 1 - |user_extra - animal_extra| / 4]
+    CalcExtra --> CalcAgree[计算宜人性匹配度<br/>agree_match = 1 - |user_agree - animal_agree| / 4]
+
+    CalcAgree --> CalcNeuroStability[计算神经质稳定性<br/>user_stability = (5 - user_neuro) / 4<br/>animal_stability = (5 - animal_neuro) / 4]
+
+    CalcNeuroStability --> CalcNeuroMatch[取最小值<br/>neuro_match = min(user_stability, animal_stability)]
+
+    CalcNeuroMatch --> ApplyWeights[应用权重系数]
+
+    ApplyWeights --> W1[宜人性: agree_match × 0.25]
+    ApplyWeights --> W2[外向性: extra_match × 0.20]
+    ApplyWeights --> W3[尽责性: consc_match × 0.20]
+    ApplyWeights --> W4[开放性: openness_match × 0.20]
+    ApplyWeights --> W5[神经质: neuro_match × 0.15]
+
+    W1 --> SumUp[求和得到总匹配度<br/>total_match = Σ(weighted_scores)]
+    W2 --> SumUp
+    W3 --> SumUp
+    W4 --> SumUp
+    W5 --> SumUp
+
+    SumUp --> ConvertPercent[转换为百分比<br/>match_percentage = total_match × 100]
+
+    ConvertPercent --> GenerateReason[生成匹配理由]
+
+    GenerateReason --> CheckAgree{宜人性匹配 > 0.7?}
+    CheckAgree -->|是| Reason1[添加: '你们都很友善温和']
+    CheckAgree -->|否| CheckAgreeLow{宜人性匹配 < 0.3?}
+    CheckAgreeLow -->|是| Reason2[添加: '性格互补性强']
+    CheckAgreeLow -->|否| CheckExtra
+
+    Reason1 --> CheckExtra{外向性匹配 > 0.7?}
+    Reason2 --> CheckExtra
+
+    CheckExtra -->|是| Reason3[添加: '都喜欢活跃环境']
+    CheckExtra -->|否| CheckExtraLow{外向性匹配 < 0.3?}
+    CheckExtraLow -->|是| Reason4[添加: '能量水平良好平衡']
+    CheckExtraLow -->|否| CheckConsc
+
+    Reason3 --> CheckConsc{尽责性匹配 > 0.7?}
+    Reason4 --> CheckConsc
+
+    CheckConsc -->|是| Reason5[添加: '都很有规律性']
+    CheckConsc -->|否| CheckOpen
+
+    Reason5 --> CheckOpen{开放性匹配 > 0.7?}
+    CheckOpen -->|是| Reason6[添加: '都对新事物开放']
+    CheckOpen -->|否| CheckStability
+
+    Reason6 --> CheckStability{平均稳定性 > 0.7?}
+    CheckStability -->|是| Reason7[添加: '都能提供稳定环境']
+    CheckStability -->|否| CheckEmpty
+
+    Reason7 --> CheckEmpty{理由是否为空?}
+    CheckEmpty -->|是| DefaultReason[添加通用建议]
+    CheckEmpty -->|否| FormatOutput
+
+    DefaultReason --> FormatOutput[格式化输出结果]
+
+    FormatOutput --> Output[返回:<br/>- match_percentage<br/>- match_reason<br/>- 各维度详情]
+    Output --> End2([结束])
+
+
+数据流向图graph LR
+    subgraph 数据采集层
+        U1[用户行为数据]
+        U2[性格测试数据]
+        U3[动物信息数据]
+    end
+
+    subgraph 数据处理层
+        P1[数据清洗]
+        P2[特征提取]
+        P3[标准化处理]
+    end
+
+    subgraph 算法引擎层
+        A1[欧几里得距离计算]
+        A2[加权匹配算法]
+        A3[推荐理由生成]
+    end
+
+    subgraph 应用服务层
+        S1[智能推荐API]
+        S2[领养匹配API]
+        S3[个性化排序]
+    end
+
+    subgraph 展示层
+        V1[推荐列表]
+        V2[匹配度可视化]
+        V3[详情页面]
+    end
+
+    U1 --> P1
+    U2 --> P1
+    U3 --> P1
+    P1 --> P2
+    P2 --> P3
+    P3 --> A1
+    P3 --> A2
+    A1 --> A3
+    A2 --> A3
+    A3 --> S1
+    A3 --> S2
+    S1 --> S3
+    S2 --> S3
+    S3 --> V1
+    S3 --> V2
+    S3 --> V3

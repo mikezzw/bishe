@@ -2,10 +2,12 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import AdoptionApplication, AdoptionMatch
+from .models import AdoptionApplication, AdoptionMatch, CloudPetActivity
 from .serializers import AdoptionApplicationSerializer, AdoptionApplicationCreateSerializer, AdoptionApplicationUpdateSerializer, AdoptionMatchSerializer
 from animals.models import Animal
 from shelters.models import ShelterStaff
+from datetime import datetime, timedelta
+from django.db.models import Count
 
 class AdoptionApplicationViewSet(viewsets.ModelViewSet):
     queryset = AdoptionApplication.objects.all()
@@ -198,6 +200,106 @@ class AdoptionApplicationViewSet(viewsets.ModelViewSet):
             'code': 200,
             'message': '获取待审核申请成功',
             'data': serializer.data
+        })
+
+    @action(detail=False, methods=['get'], url_path='my-cloud-pets')
+    def my_cloud_pets(self, request):
+        """
+        获取用户的云养宠物列表及统计信息
+        """
+        # 获取用户已审核通过的领养申请
+        approved_applications = AdoptionApplication.objects.filter(
+            applicant=request.user,
+            status__in=['approved', 'completed']
+        ).select_related('animal')
+        
+        cloud_pets = []
+        for app in approved_applications:
+            animal = app.animal
+            
+            # 计算云养天数
+            days_adopted = (datetime.now().date() - app.reviewed_at.date()).days if app.reviewed_at else 0
+            
+            # 获取该动物的动态数量（作为投喂/互动次数）
+            activity_count = CloudPetActivity.objects.filter(animal=animal).count()
+            
+            # 获取最近一次动态
+            latest_activity = CloudPetActivity.objects.filter(animal=animal).first()
+            
+            cloud_pets.append({
+                'id': animal.id,
+                'name': animal.name,
+                'species': animal.species,
+                'breed': animal.breed,
+                'age': animal.age,
+                'images': animal.images[:1] if animal.images else [],
+                'status': animal.status,
+                'days_adopted': days_adopted,
+                'interaction_count': activity_count,
+                'latest_activity': {
+                    'title': latest_activity.title,
+                    'content': latest_activity.content,
+                    'created_at': latest_activity.created_at.isoformat(),
+                    'activity_type': latest_activity.get_activity_type_display()
+                } if latest_activity else None,
+                'adoption_date': app.reviewed_at.isoformat() if app.reviewed_at else None
+            })
+        
+        return Response({
+            'code': 200,
+            'message': '获取云养宠物成功',
+            'data': cloud_pets
+        })
+    
+    @action(detail=True, methods=['get'], url_path='activities')
+    def pet_activities(self, request, pk=None):
+        """
+        获取指定动物的云养动态时间轴
+        """
+        try:
+            animal = Animal.objects.get(id=pk)
+        except Animal.DoesNotExist:
+            return Response({'code': 404, 'message': '动物不存在'}, status=404)
+        
+        # 检查用户是否有权限查看（必须是该动物的云养家长）
+        has_permission = AdoptionApplication.objects.filter(
+            applicant=request.user,
+            animal=animal,
+            status__in=['approved', 'completed']
+        ).exists()
+        
+        if not has_permission and not request.user.is_staff:
+            return Response({'code': 403, 'message': '无权查看该动物的动态'}, status=403)
+        
+        # 获取动态列表，分页返回
+        page = int(request.query_params.get('page', 1))
+        page_size = 10
+        offset = (page - 1) * page_size
+        
+        activities = CloudPetActivity.objects.filter(animal=animal)[offset:offset+page_size]
+        total_count = CloudPetActivity.objects.filter(animal=animal).count()
+        
+        activities_data = []
+        for act in activities:
+            activities_data.append({
+                'id': act.id,
+                'title': act.title,
+                'content': act.content,
+                'activity_type': act.get_activity_type_display(),
+                'images': act.images,
+                'created_at': act.created_at.isoformat(),
+                'created_by': act.created_by.username if act.created_by else '基地管理员'
+            })
+        
+        return Response({
+            'code': 200,
+            'message': '获取动态成功',
+            'data': {
+                'activities': activities_data,
+                'total': total_count,
+                'page': page,
+                'page_size': page_size
+            }
         })
 
 class AdoptionMatchViewSet(viewsets.ModelViewSet):

@@ -46,3 +46,32 @@ class AdoptionMatch(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.animal.name} ({self.match_score})'
 
+
+class CloudPetActivity(models.Model):
+    """云养宠物动态记录"""
+    ACTIVITY_TYPES = (
+        ('feeding', '喂食'),
+        ('medical', '医疗'),
+        ('playing', '玩耍'),
+        ('grooming', '美容'),
+        ('exercise', '运动'),
+        ('other', '其他'),
+    )
+    
+    animal = models.ForeignKey(Animal, on_delete=models.CASCADE, related_name='cloud_activities', verbose_name='动物')
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES, verbose_name='活动类型')
+    title = models.CharField(max_length=100, verbose_name='标题')
+    content = models.TextField(verbose_name='详细内容')
+    images = models.JSONField(default=list, blank=True, verbose_name='图片列表')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='posted_activities', verbose_name='发布者')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发布时间')
+    
+    class Meta:
+        db_table = 'cloud_pet_activities'
+        verbose_name = '云养宠物动态'
+        verbose_name_plural = '云养宠物动态列表'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.animal.name} - {self.title}'
+

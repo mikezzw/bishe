@@ -11,6 +11,7 @@ from django.core.files.base import ContentFile
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.core.cache import cache
+from django.db import models
 from .models import Animal
 from .serializers import AnimalSerializer, AnimalCreateSerializer, AnimalUpdateSerializer
 import sys
@@ -53,6 +54,9 @@ class AnimalViewSet(viewsets.ModelViewSet):
     def list(self, request):
         # 获取查询参数
         shelter_id = request.query_params.get('shelter')
+        status_filter = request.query_params.get('status')
+        species_filter = request.query_params.get('species')
+        search_query = request.query_params.get('search')
         
         # 构建查询集
         queryset = self.get_queryset()
@@ -60,6 +64,21 @@ class AnimalViewSet(viewsets.ModelViewSet):
         # 如果提供了shelter参数，过滤出该基地的动物
         if shelter_id:
             queryset = queryset.filter(shelter_id=shelter_id)
+        
+        # 如果提供了status参数，按状态过滤
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # 如果提供了species参数，按物种过滤
+        if species_filter:
+            queryset = queryset.filter(species=species_filter)
+        
+        # 如果提供了search参数，按名称或品种搜索
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(name__icontains=search_query) | 
+                models.Q(breed__icontains=search_query)
+            )
         
         # 分页处理
         page = self.paginate_queryset(queryset)
